@@ -33,7 +33,7 @@ display: block;
 width: 300px;
 height: 400px;
 object-fit: cover;
-padding-buttom: 5px;
+padding-bottom: 5px;
   animation: slideUpFade 0.5s ease-out;
 }
 #picdiv{
@@ -127,11 +127,13 @@ transition: all 0.2s ease-in-out;
           link.click();
         });
       canvas.addEventListener("click", () => {
+          overlay.style.display: block;
           overlay.classList.add('class1');
           const imgdata = context.getImageData(0, 0, canvas.width, canvas.height);
           copiedContext.putImageData(imgdata, 0, 0);
       });
       closebtn.addEventListener("click", () => {
+        overlay.style.display: none;
          overlay.classList.remove('class1');
       });
     </script>
