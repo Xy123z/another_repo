@@ -13,12 +13,6 @@ transform: translateY(0);
 opacity: 1;
 }
   }
-  .class1{
-     display: block;
-    flex-direction: column;
-    z-index: 1001;
-    backdrop-filter: blur(8px);
-  }
 body {
 background-color: #ff9999;
 display: flex;
@@ -33,7 +27,7 @@ display: block;
 width: 300px;
 height: 400px;
 object-fit: cover;
-padding-bottom: 5px;
+padding: 5px;
   animation: slideUpFade 0.5s ease-out;
 }
 #picdiv{
@@ -44,7 +38,7 @@ display: block;
 width: 300px;
 height: 400px;
 object-fit: cover;
-padding: 5px;
+
   animation: slideUpFade 0.5s ease-out;
 }
 #picdiv > canvas,#previewcanvas {
@@ -62,10 +56,28 @@ background-color: FloralWhite;
 #btn:hover,#btn1:hover,#btn2:hover,#btn3:hover{
 background-color: red;
 transform: scale(1.03);
-transition: all 0.2s ease-in-out;  
+transition: all 0.2s ease-in-out;
 }
-  #overlay{
-    display: none;
+#overlay{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  visibility: hidden;
+     display: flex;
+     flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    backdrop-filter: blur(8px);
+    background-color: rgba(0,0,0,0.5);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  #overlay.show{
+    visibility: visible;
+    opacity: 1;
   }
 </style>
     <title>Camera Access</title>
@@ -73,14 +85,14 @@ transition: all 0.2s ease-in-out;
 <body>
   <div id="main" style="display:none;">
     <div id="overlay">
-    <button id="btn3" style="z-index: 1002;">close</button>
       <canvas id="previewcanvas" width="600" height="800" style="z-index: 1002;"></canvas>
+      <button id="btn3" style="z-index: 1002; align-self: flex-end;">close</button>
     </div>
     <h2>Enter a picture of your face </h2>
     <video id="camera" width="300" height="400" autoplay></video>
     <div style="padding: 10px;">
     <button id="btn" >Capture</button>
-    <button id="btn1">Clear</button>  
+    <button id="btn1">Clear</button>
     </div>
     <div id="picdiv">
     <canvas id="snapshot" width="300" height="400" title="preview image"></canvas>
@@ -127,15 +139,13 @@ transition: all 0.2s ease-in-out;
           link.click();
         });
       canvas.addEventListener("click", () => {
-          //overlay.style.display = "block";
-          overlay.classList.add('class1');
-          const imgdata = context.getImageData(0, 0, canvas.width, canvas.height);
-          copiedContext.putImageData(imgdata, 0, 0);
+          overlay.classList.add('show');
+          copiedContext.drawImage(canvas,0,0,previewcanvas.width, previewcanvas.height);
       });
       closebtn.addEventListener("click", () => {
-        //overlay.style.display = "none";
-         overlay.classList.remove('class1');
+         overlay.classList.remove('show');
       });
     </script>
 </body>
 </html>
+
