@@ -59,6 +59,7 @@ background-color: red;
     <title>Camera Access</title>
 </head>
 <body>
+  <div id="main" style="display:none;">
     <h2>Enter a picture of your face </h2>
     <video id="camera" width="300" height="400" autoplay></video>
     <div style="padding: 10px;">
@@ -67,19 +68,21 @@ background-color: red;
     <div id="picdiv">
     <canvas id="snapshot" width="300" height="400"></canvas>
     </div>
+  </div>
     <script>
         const video = document.getElementById('camera');
         const canvas = document.getElementById('snapshot');
         const context = canvas.getContext('2d');
-
-        // Request camera access
+        const main = document.getElementById('main');
+      // Request camera access
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
                 video.srcObject = stream;
             })
             .catch(err => {
                 console.error('Error accessing camera:', err);
-                alert('Please allow camera access! 🌼');
+                alert('Please allow camera access!');
+              main.style.display = "block";
             });
 
         function captureImage() {
