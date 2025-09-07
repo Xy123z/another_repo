@@ -100,7 +100,7 @@ transition: all 0.2s ease-in-out;
         });
         clearbtn.addEventListener("click",() => {
            context.clearRect( 0, 0, canvas.width, canvas.height);
-          savebtn.style.display = "inline-block";
+          savebtn.style.display = "none";
         });
         savebtn.addEventListener("click",() => {
           const image = canvas.toDataURL('image/png');
