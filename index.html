@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  @keyframes slideUpFade{
+from{
+transform: translateY(20px);
+opacity: 0;
+}
+to{
+transform: translateY(0);
+opacity: 1;
+}
+  }
+body {
+background-color: #ff9999;
+display: flex;
+align-items: center;
+flex-direction: column;
+}
+#camera {
+border: none;
+border-radius: 10px;
+box-shadow: 0 0 10px rgba(0,0,0,0.5);
+display: block;
+width: 300px;
+height: 400px;
+object-fit: cover;
+padding-buttom: 5px;
+  animation: slideUpFade 0.5s ease-out;
+}
+#picdiv{
+border: 2px solid white;
+border-radius: 10px;
+box-shadow: 0 0 10px rgba(0,0,0,0.5);
+display: block;
+width: 300px;
+height: 400px;
+object-fit: cover;
+padding: 5px;
+  animation: slideUpFade 0.5s ease-out;
+}
+#picdiv > canvas {
+padding: 5px;
+border: none;
+border-radius: 10px;
+}
+#btn{
+background-color: #ff9999;
+  border-radius: 10px;
+  border: none;
+  padding: 10px;
+  animation: slideUpFade 0.5s ease-out;
+}
+#btn:hover{
+background-color: red;
+}
+</style>
+    <title>Camera Access</title>
+</head>
+<body>
+  <div id="main" style="display:none;">
+    <h2>Enter a picture of your face </h2>
+    <video id="camera" width="300" height="400" autoplay></video>
+    <div style="padding: 10px;">
+    <button id="btn" onclick="captureImage()">Capture</button>
+    </div>
+    <div id="picdiv">
+    <canvas id="snapshot" width="300" height="400"></canvas>
+    </div>
+  </div>
+    <script>
+        const video = document.getElementById('camera');
+        const canvas = document.getElementById('snapshot');
+        const context = canvas.getContext('2d');
+        const main = document.getElementById('main');
+      // Request camera access
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+                main.style.display = "block";
+            })
+            .catch(err => {
+                console.error('Error accessing camera:', err);
+                alert('Please allow camera access!');
+
+            });
+
+        function captureImage() {
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        }
+    </script>
+</body>
+</html>
