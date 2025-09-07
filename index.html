@@ -79,13 +79,22 @@ transition: all 0.2s ease-in-out;
     visibility: visible;
     opacity: 1;
   }
+  #previewcanvas{
+    max-height: 90vh;
+    max-width: 90vw;
+    height: auto;
+    width: auto;
+    z-index: 1002;
+    border-radius: 10px;
+    border: none;
+  }
 </style>
     <title>Camera Access</title>
 </head>
 <body>
   <div id="main" style="display:none;">
     <div id="overlay">
-      <canvas id="previewcanvas" width="600" height="800" style="z-index: 1002;"></canvas>
+      <canvas id="previewcanvas"></canvas>
       <button id="btn3" style="z-index: 1002; align-self: flex-end;">close</button>
     </div>
     <h2>Enter a picture of your face </h2>
