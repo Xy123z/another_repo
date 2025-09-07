@@ -46,14 +46,14 @@ padding: 5px;
 border: none;
 border-radius: 10px;
 }
-#btn,#btn1{
+#btn,#btn1,#btn2{
 background-color: FloralWhite;
   border-radius: 10px;
   border: none;
   padding: 10px;
   animation: slideUpFade 0.5s ease-out;
 }
-#btn:hover,#btn1:hover{
+#btn:hover,#btn1:hover,#btn2:hover{
 background-color: red;
 transform: scale(1.03);
 transition: all 0.2s ease-in-out;  
@@ -71,6 +71,7 @@ transition: all 0.2s ease-in-out;
     </div>
     <div id="picdiv">
     <canvas id="snapshot" width="300" height="400"></canvas>
+      <button id="btn2" style="display:none;">
     </div>
   </div>
     <script>
@@ -78,6 +79,9 @@ transition: all 0.2s ease-in-out;
         const canvas = document.getElementById('snapshot');
         const context = canvas.getContext('2d');
         const main = document.getElementById('main');
+        const savebtn = document.getElementById('btn2');
+      const clearbtn =  document.getElementById('btn1');
+      const capturebtn = document.getElementById('btn');
       // Request camera access
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
@@ -90,12 +94,21 @@ transition: all 0.2s ease-in-out;
 
             });
 
-        function captureImage() {
+        capturebtn.addEventListener("click",() => {
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        }
-        function clearCanvas() {
+            savebtn.style.display = "inline-block";
+        });
+        clearbtn.addEventListener("click",() => {
            context.clearRect( 0, 0, canvas.width, canvas.height);
-        }
+          savebtn.style.display = "inline-block";
+        });
+        savebtn.addEventListener("click",() => {
+          const image = canvas.toDataURL(image/png);
+          const link = document.createElement("a");
+          link.href = image;
+          link.download = 'my_face.png';
+          link.click();
+        });
     </script>
 </body>
 </html>
