@@ -127,13 +127,13 @@ transition: all 0.2s ease-in-out;
           link.click();
         });
       canvas.addEventListener("click", () => {
-          overlay.style.display = "block";
+          //overlay.style.display = "block";
           overlay.classList.add('class1');
           const imgdata = context.getImageData(0, 0, canvas.width, canvas.height);
           copiedContext.putImageData(imgdata, 0, 0);
       });
       closebtn.addEventListener("click", () => {
-        overlay.style.display = "none";
+        //overlay.style.display = "none";
          overlay.classList.remove('class1');
       });
     </script>
