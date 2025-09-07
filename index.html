@@ -13,6 +13,12 @@ transform: translateY(0);
 opacity: 1;
 }
   }
+  .class1{
+     display: flex;
+    flex-direction: column;
+    z-index: 1001;
+    backdrop-filter: blur(8px);
+  }
 body {
 background-color: #ff9999;
 display: flex;
@@ -41,28 +47,35 @@ object-fit: cover;
 padding: 5px;
   animation: slideUpFade 0.5s ease-out;
 }
-#picdiv > canvas {
+#picdiv > canvas,#previewcanvas {
 padding: 5px;
 border: none;
 border-radius: 10px;
 }
-#btn,#btn1,#btn2{
+#btn,#btn1,#btn2,#btn3{
 background-color: FloralWhite;
   border-radius: 10px;
   border: none;
   padding: 10px;
   animation: slideUpFade 0.5s ease-out;
 }
-#btn:hover,#btn1:hover,#btn2:hover{
+#btn:hover,#btn1:hover,#btn2:hover,#btn3:hover{
 background-color: red;
 transform: scale(1.03);
 transition: all 0.2s ease-in-out;  
 }
+  #overlay{
+    display: none;
+  }
 </style>
     <title>Camera Access</title>
 </head>
 <body>
   <div id="main" style="display:none;">
+    <div id="overlay">
+    <button id="btn3" style="z-index: 1002;">close</button>
+      <canvas id="previewcanvas" width="600" height="800" style="z-index: 1002;"></canvas>
+    </div>
     <h2>Enter a picture of your face </h2>
     <video id="camera" width="300" height="400" autoplay></video>
     <div style="padding: 10px;">
@@ -70,18 +83,22 @@ transition: all 0.2s ease-in-out;
     <button id="btn1">Clear</button>  
     </div>
     <div id="picdiv">
-    <canvas id="snapshot" width="300" height="400"></canvas>
+    <canvas id="snapshot" width="300" height="400" title="preview image"></canvas>
       <button id="btn2" style="display:none;">download image</button>
     </div>
   </div>
     <script>
         const video = document.getElementById('camera');
         const canvas = document.getElementById('snapshot');
+        const previewcanvas = document.getElementById('previewcanvas');
         const context = canvas.getContext('2d');
+        const copiedContext = previewcanvas.getContext('2d');
         const main = document.getElementById('main');
         const savebtn = document.getElementById('btn2');
       const clearbtn =  document.getElementById('btn1');
       const capturebtn = document.getElementById('btn');
+      const overlay = document.getElementById("overlay");
+      const closebtn = document.getElementById('btn3');
       // Request camera access
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
@@ -109,6 +126,14 @@ transition: all 0.2s ease-in-out;
           link.download = 'my_face.png';
           link.click();
         });
+      canvas.addEventListener("click", () => {
+          overlay.classList.add('class1');
+          const imgdata = context.getImageData(0, 0, canvas.width, canvas.height);
+          copiedContext.putImageData(imgdata, 0, 0);
+      });
+      closebtn.addEventListener("click", () => {
+         overlay.classList.remove('class1');
+      });
     </script>
 </body>
 </html>
