@@ -141,7 +141,8 @@ transition: all 0.2s ease-in-out;
       const overlayContext = overlaycanvas.getContext('2d');
       const newoverlay = document.getElementById('newoverlay');
       const cancelbtn = document.getElementById('btn4');
-      let canceled = false
+      let canceled = false;
+      let detectionInterval = null;
       //load face detection model
       let model;
       async function loadModel(){
