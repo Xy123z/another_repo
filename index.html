@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<DOCTYPE html>
 <html lang=en>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -105,7 +105,7 @@ transition: all 0.2s ease-in-out;
 <body>
   <div id="main" style="display:none;">
   <div id="newoverlay">
-  <button id="btn4" style="z-index: 1002;">cancel</button>
+  <button id="btn4" style="z-index: 1002;display: none;">cancel</button>
   </div>
     <div id="overlay">
       <canvas id="previewcanvas"></canvas>
@@ -146,42 +146,47 @@ transition: all 0.2s ease-in-out;
       let model;
       async function loadModel(){
           model = await blazeface.load();
-          console.log("face detection model loaded");
-      }
-      let detectionPaused = false;
-      let stopwork = false;
 function showCapturedFace(start, area) {
-    if (detectionPaused||stopwork) return;
-    if (canceled){
-    newoverlay.classList.remove('show');
-    newoverlay.innerHTML = '';
-    stopwork = true;
-    return;
-    }
-    // Pause face detection
+    if (detectionPaused || stopwork) return;
+
     detectionPaused = true;
+    newoverlay.classList.add('show');
+    canceled = false;
+
+    cancelbtn.style.display = 'inline-block';
+    cancelbtn.onclick = () => {
+        canceled = true;
+        newoverlay.classList.remove('show');
+        detectionPaused = false;
+    };
+
     const message = document.createElement('div');
     message.innerText = "capturing image...";
-    const cancelCopy = cancelbtn.cloneNode(true);  // create a fresh cancel button
-cancelCopy.addEventListener('click', () => {
-    canceled = true;
-});
-    newoverlay.appendChild(message);
-     newoverlay.classList.add('show');
-     void newoverlay.offsetWidth;
-  setTimeout(() => {
-    newoverlay.classList.remove('show');
-    newoverlay.innerHTML = '';
-    overlay.classList.add('show');
-    // Crop the face from video and draw it on preview canvas
-    copiedContext.clearRect(0, 0, previewcanvas.width, previewcanvas.height);
-    copiedContext.drawImage(
-        video,
-        start[0], start[1], area[0], area[1],
-        0, 0, previewcanvas.width, previewcanvas.height
-    );
-    },3000);
-    // Show overlay
+
+    newoverlay.insertBefore(message, cancelbtn);
+
+    setTimeout(() => {
+        if (canceled) {
+            newoverlay.classList.remove('show');
+            detectionPaused = false;
+            stopwork = true;
+
+            clearInterval(detectionInterval);
+            return;
+        }
+
+        newoverlay.classList.remove('show');
+        newoverlay.innerHTML = ''; // Clean message, button remains because we’ll declare cancelbtn always in HTML.
+
+        overlay.classList.add('show');
+        copiedContext.clearRect(0, 0, previewcanvas.width, previewcanvas.height);
+        copiedContext.drawImage(
+            video,
+            start[0], start[1], area[0], area[1],
+            0, 0, previewcanvas.width, previewcanvas.height
+        );
+
+    }, 3000);
 }
       // Request camera access
         navigator.mediaDevices.getUserMedia({ video: true })
@@ -192,7 +197,9 @@ cancelCopy.addEventListener('click', () => {
                 video.addEventListener("loadeddata", () => {
                 overlaycanvas.width = video.videoWidth;
                 overlaycanvas.height = video.videoHeight;
-              setInterval(async () =>{
+              let interval = setInterval(async () =>{
+                if(detectionPaused||stopwork)
+                return;
                 overlayContext.clearRect(0, 0, overlaycanvas.width, overlaycanvas.height);
                 const liveTensors = false;
                 const livePredictions = await model.estimateFaces(video,liveTensors);
@@ -244,9 +251,9 @@ cancelCopy.addEventListener('click', () => {
           copiedContext.drawImage(canvas,0,0,previewcanvas.width, previewcanvas.height);
       });
       closebtn.addEventListener("click", () => {
-         overlay.classList.remove('show');
-         detectionPaused = false;
-      });
+    overlay.classList.remove('show');
+    detectionPaused = false;
+});
     </script>
 </body>
 </html>
