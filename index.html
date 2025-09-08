@@ -48,19 +48,19 @@ padding: 5px;
 border: none;
 border-radius: 10px;
 }
-#btn,#btn1,#btn2,#btn3{
+#btn,#btn1,#btn2,#btn3,#btn4{
 background-color: FloralWhite;
   border-radius: 10px;
   border: none;
   padding: 10px;
   animation: slideUpFade 0.5s ease-out;
 }
-#btn:hover,#btn1:hover,#btn2:hover,#btn3:hover{
+#btn:hover,#btn1:hover,#btn2:hover,#btn3:hover,#btn4:hover{
 background-color: red;
 transform: scale(1.03);
 transition: all 0.2s ease-in-out;
 }
-#overlay{
+#overlay,#newoverlay{
   position: fixed;
   top: 0;
   left: 0;
@@ -77,7 +77,16 @@ transition: all 0.2s ease-in-out;
     opacity: 0;
     transition: opacity 0.3s ease;
   }
-  #overlay.show{
+  #newoverlay div {
+    background-color: white;
+    padding: 20px 30px;
+    border-radius: 10px;
+    font-size: 1.5em;
+    text-align: center;
+    color: black;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+}
+  #overlay.show,#newoverlay.show{
     visibility: visible;
     opacity: 1;
   }
@@ -95,9 +104,12 @@ transition: all 0.2s ease-in-out;
 </head>
 <body>
   <div id="main" style="display:none;">
+  <div id="newoverlay">
+  <button id="btn4" style="z-index: 1002;">cancel</button>
+  </div>
     <div id="overlay">
       <canvas id="previewcanvas"></canvas>
-      <button id="btn3" style="z-index: 1002; align-self: flex-end;">close</button>
+      <button id="btn3" style="z-index: 1002;">close</button>
     </div>
     <h2>Enter a picture of your face </h2>
     <div style="position:relative; width:300px; height:400px;">
@@ -127,12 +139,50 @@ transition: all 0.2s ease-in-out;
       const closebtn = document.getElementById('btn3');
       const overlaycanvas = document.getElementById('overlaycanvas');
       const overlayContext = overlaycanvas.getContext('2d');
+      const newoverlay = document.getElementById('newoverlay');
+      const cancelbtn = document.getElementById('btn4');
+      let canceled = false
       //load face detection model
       let model;
       async function loadModel(){
           model = await blazeface.load();
           console.log("face detection model loaded");
       }
+      let detectionPaused = false;
+      let stopwork = false;
+function showCapturedFace(start, area) {
+    if (detectionPaused||stopwork) return;
+    if (canceled){
+    newoverlay.classList.remove('show');
+    newoverlay.innerHTML = '';
+    stopwork = true;
+    return;
+    }
+    // Pause face detection
+    detectionPaused = true;
+    const message = document.createElement('div');
+    message.innerText = "capturing image...";
+    const cancelCopy = cancelbtn.cloneNode(true);  // create a fresh cancel button
+cancelCopy.addEventListener('click', () => {
+    canceled = true;
+});
+    newoverlay.appendChild(message);
+     newoverlay.classList.add('show');
+     void newoverlay.offsetWidth;
+  setTimeout(() => {
+    newoverlay.classList.remove('show');
+    newoverlay.innerHTML = '';
+    overlay.classList.add('show');
+    // Crop the face from video and draw it on preview canvas
+    copiedContext.clearRect(0, 0, previewcanvas.width, previewcanvas.height);
+    copiedContext.drawImage(
+        video,
+        start[0], start[1], area[0], area[1],
+        0, 0, previewcanvas.width, previewcanvas.height
+    );
+    },3000);
+    // Show overlay
+}
       // Request camera access
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
@@ -142,7 +192,7 @@ transition: all 0.2s ease-in-out;
                 video.addEventListener("loadeddata", () => {
                 overlaycanvas.width = video.videoWidth;
                 overlaycanvas.height = video.videoHeight;
-                setInterval(async () =>{
+              setInterval(async () =>{
                 overlayContext.clearRect(0, 0, overlaycanvas.width, overlaycanvas.height);
                 const liveTensors = false;
                 const livePredictions = await model.estimateFaces(video,liveTensors);
@@ -154,12 +204,12 @@ transition: all 0.2s ease-in-out;
                 overlayContext.strokeStyle = "red";
                 overlayContext.lineWidth = 3;
                 overlayContext.strokeRect(start[0], start[1], area[0], area[1]);
+                showCapturedFace(start,area);
                 });
                 }
                 },50);
                 });
             })
-
             .catch(err => {
                 console.error('Error accessing camera:', err);
                 alert('Please allow camera access!');
@@ -195,6 +245,7 @@ transition: all 0.2s ease-in-out;
       });
       closebtn.addEventListener("click", () => {
          overlay.classList.remove('show');
+         detectionPaused = false;
       });
     </script>
 </body>
