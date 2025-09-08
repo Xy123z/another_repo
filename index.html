@@ -2,6 +2,8 @@
 <html lang=en>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script  src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"></script>
 <style>
   @keyframes slideUpFade{
 from{
@@ -120,9 +122,16 @@ transition: all 0.2s ease-in-out;
       const capturebtn = document.getElementById('btn');
       const overlay = document.getElementById("overlay");
       const closebtn = document.getElementById('btn3');
+      //load face detection model
+      let model;
+      async function loadModel(){
+          model = await blazeface.load();
+          console.log("face detection model loaded");
+      }
       // Request camera access
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
+                loadModel();
                 video.srcObject = stream;
                 main.style.display = "block";
             })
@@ -134,6 +143,14 @@ transition: all 0.2s ease-in-out;
 
         capturebtn.addEventListener("click",() => {
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const tensors = false;
+          const prediction = await model.estimateFaces(canvas,tensors);
+          if(prediction.length > 0){
+            alert("a face was detected");
+          }
+          else{
+            alert("no face detected");
+          }
             savebtn.style.display = "inline-block";
         });
         clearbtn.addEventListener("click",() => {
