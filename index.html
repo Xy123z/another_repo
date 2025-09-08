@@ -141,7 +141,7 @@ transition: all 0.2s ease-in-out;
 
             });
 
-        capturebtn.addEventListener("click",() => {
+        capturebtn.addEventListener("click",async () => {
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
           const tensors = false;
           const prediction = await model.estimateFaces(canvas,tensors);
