@@ -120,7 +120,7 @@ transition: all 0.2s ease-in-out;
     <canvas id="overlaycanvas" style="position:absolute;top:0;left:0;width:300px;height:400px;"></canvas>
     </div>
     <div style="padding: 10px;">
-    <button id="btn" >Capture</button>
+    <button id="btn" style="display:none;">Capture manually</button>
     <button id="btn1">Clear</button>
     </div>
     <div id="picdiv">
@@ -246,6 +246,7 @@ let interval = null;
       cancelbtn.addEventListener("click", () => {
       newoverlay.classList.remove('show');
       canceled = true;
+        capturebtn.style.display = "inline-block";
       clearInterval(interval1);
       });
     </script>
