@@ -167,20 +167,21 @@ transition: all 0.2s ease-in-out;
     if (input.value === '') return;
     imgname = input.value;
 
-    // Get the data URL of the canvas
     const dataURL = canvas.toDataURL('image/png');
 
-    // Convert image to SVG using ImageTracerJS
-    ImageTracer.imageToSVG(dataURL, function(svgString) {
-        // Download the SVG
-        const blob = new Blob([svgString], { type: "image/svg+xml" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = imgname + '.svg';
-        link.click();
+    const img = new Image();
+    img.onload = function() {
+        ImageTracer.imageToSVG(img, function(svgString) {
+            const blob = new Blob([svgString], { type: "image/svg+xml" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = imgname + '.svg';
+            link.click();
 
-        newoverlay_clone.classList.remove("show");
-    }, 'posterized2');  // You can experiment with other presets
+            newoverlay_clone.classList.remove("show");
+        }, 'posterized2');  // You can adjust preset
+    };
+    img.src = dataURL;
 });
       message_clone.appendChild(p);
       message_clone.appendChild(input);
