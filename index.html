@@ -164,15 +164,24 @@ transition: all 0.2s ease-in-out;
       const downloadbtn = document.createElement("button");
       downloadbtn.innerText = 'save';
       downloadbtn.addEventListener("click", () => {
-      if(input.value === '') return;
-      imgname = input.value;
-      const image = canvas.toDataURL('image/png');
-          const link = document.createElement("a");
-          link.href = image;
-          link.download = imgname + '.png';
-          link.click();
-      newoverlay_clone.classList.remove("show");
-      });
+    if (input.value === '') return;
+    imgname = input.value;
+
+    // Get the data URL of the canvas
+    const dataURL = canvas.toDataURL('image/png');
+
+    // Convert image to SVG using ImageTracerJS
+    ImageTracer.imageToSVG(dataURL, function(svgString) {
+        // Download the SVG
+        const blob = new Blob([svgString], { type: "image/svg+xml" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = imgname + '.svg';
+        link.click();
+
+        newoverlay_clone.classList.remove("show");
+    }, 'posterized2');  // You can experiment with other presets
+});
       message_clone.appendChild(p);
       message_clone.appendChild(input);
       message_clone.appendChild(downloadbtn);
