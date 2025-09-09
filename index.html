@@ -106,7 +106,7 @@ transition: all 0.2s ease-in-out;
   <div id="main" style="display:none;">
   <div id="newoverlay">
   <div id="message">
-  <p>Capturing image...</p>
+  <p id="p">Capturing image...</p>
   </div>
   <button id="btn4" style="z-index: 1002;">cancel</button>
   </div>
@@ -145,7 +145,39 @@ transition: all 0.2s ease-in-out;
       const newoverlay = document.getElementById('newoverlay');
       const cancelbtn = document.getElementById('btn4');
       const picdiv = document.getElementById('picdiv');
-      let canceled = false
+      let canceled = false;
+      let imgname = null;
+      const savebtn_clone = savebtn.cloneNode(true);
+      const newoverlay_clone = newoverlay.cloneNode(true);
+      const message_clone = document.getElementById("message").cloneNode(true);
+      newoverlay_clone.innerHTML = '';
+      message_clone.innerHTML = '';
+      const p = document.createElement("p");
+      p.textContent = "enter image name...";
+      message_clone.style.display = "flex";
+      message_clone.style.flexDirection = "column";
+      message_clone.style.alignItems = "center";
+      message_clone.style.justifyContent = "center";
+      const input = document.createElement("input");
+      input.type = "text";
+      input.placeHolder = "enter the name of the photo";
+      const downloadbtn = document.createElement("button");
+      downloadbtn.innerText = 'save';
+      downloadbtn.addEventListener("click", () => {
+      if(input.value === '') return;
+      imgname = input.value;
+      const image = canvas.toDataURL('image/png');
+          const link = document.createElement("a");
+          link.href = image;
+          link.download = imgname + '.png';
+          link.click();
+      newoverlay_clone.classList.remove("show");
+      });
+      message_clone.appendChild(p);
+      message_clone.appendChild(input);
+      message_clone.appendChild(downloadbtn);
+      newoverlay_clone.appendChild(message_clone);
+      document.body.appendChild(newoverlay_clone);
       //load face detection model
       let model;
       let interval1 = null;
@@ -166,6 +198,8 @@ function showCapturedFace(start, area) {
     setTimeout(() => {
     if(canceled) return;
         newoverlay.classList.remove('show');
+        savebtn_clone.style.display = 'inline-block';
+        overlay.appendChild(savebtn_clone);
         overlay.classList.add('show');
 
         copiedContext.clearRect(0, 0, previewcanvas.width, previewcanvas.height);
@@ -230,11 +264,10 @@ let interval = null;
           savebtn.style.display = "none";
         });
         savebtn.addEventListener("click",() => {
-          const image = canvas.toDataURL('image/png');
-          const link = document.createElement("a");
-          link.href = image;
-          link.download = 'my_face.png';
-          link.click();
+        newoverlay_clone.classList.add("show");
+        });
+         savebtn_clone.addEventListener("click",() => {
+         newoverlay_clone.classList.add("show");
         });
       canvas.addEventListener("click", () => {
           overlay.classList.add('show');
@@ -242,6 +275,7 @@ let interval = null;
       });
       closebtn.addEventListener("click", () => {
          overlay.classList.remove('show');
+         savebtn_clone.style.display = 'none';
          detectionPaused = false;
       });
       cancelbtn.addEventListener("click", () => {
