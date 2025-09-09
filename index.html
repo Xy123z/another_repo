@@ -2,279 +2,252 @@
 <html lang=en>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
+  <script  src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"></script>
-  <style>
-    @keyframes slideUpFade {
-      from {
-        transform: translateY(20px);
-        opacity: 0;
-      }
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
-    }
-    body {
-      background-color: #ff9999;
-      display: flex;
-      align-items: center;
-      flex-direction: column;
-    }
-    #camera {
-      border: none;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
-      display: block;
-      width: 300px;
-      height: 400px;
-      object-fit: cover;
-      padding: 5px;
-      animation: slideUpFade 0.5s ease-out;
-    }
-    #picdiv {
-      border: 2px solid white;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
-      display: block;
-      width: 300px;
-      height: 400px;
-      object-fit: cover;
-      animation: slideUpFade 0.5s ease-out;
-    }
-    #picdiv > canvas, #previewcanvas {
-      padding: 5px;
-      border: none;
-      border-radius: 10px;
-    }
-    #btn, #btn1, #btn2, #btn3, #btn4 {
-      background-color: FloralWhite;
-      border-radius: 10px;
-      border: none;
-      padding: 10px;
-      animation: slideUpFade 0.5s ease-out;
-    }
-    #btn:hover, #btn1:hover, #btn2:hover, #btn3:hover, #btn4:hover {
-      background-color: red;
-      transform: scale(1.03);
-      transition: all 0.2s ease-in-out;
-    }
-    #overlay, #newoverlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      visibility: hidden;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 1001;
-      backdrop-filter: blur(8px);
-      background-color: rgba(0,0,0,0.5);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-    #newoverlay div {
-      background-color: white;
-      padding: 20px 30px;
-      border-radius: 10px;
-      font-size: 1.5em;
-      text-align: center;
-      color: black;
-      box-shadow: 0 0 15px rgba(0,0,0,0.5);
-    }
-    #overlay.show, #newoverlay.show {
-      visibility: visible;
-      opacity: 1;
-    }
-    #previewcanvas {
-      max-height: 90vh;
-      max-width: 90vw;
-      height: auto;
-      width: auto;
-      z-index: 1002;
-      border-radius: 10px;
-      border: none;
-    }
-  </style>
-  <title>Camera Access</title>
+<style>
+  @keyframes slideUpFade{
+from{
+transform: translateY(20px);
+opacity: 0;
+}
+to{
+transform: translateY(0);
+opacity: 1;
+}
+  }
+body {
+background-color: #ff9999;
+display: flex;
+align-items: center;
+flex-direction: column;
+}
+#camera {
+border: none;
+border-radius: 10px;
+box-shadow: 0 0 10px rgba(0,0,0,0.5);
+display: block;
+width: 300px;
+height: 400px;
+object-fit: cover;
+padding: 5px;
+  animation: slideUpFade 0.5s ease-out;
+}
+#picdiv{
+border: 2px solid white;
+border-radius: 10px;
+box-shadow: 0 0 10px rgba(0,0,0,0.5);
+display: block;
+width: 300px;
+height: 400px;
+object-fit: cover;
+
+  animation: slideUpFade 0.5s ease-out;
+}
+#picdiv > canvas,#previewcanvas {
+padding: 5px;
+border: none;
+border-radius: 10px;
+}
+#btn,#btn1,#btn2,#btn3,#btn4{
+background-color: FloralWhite;
+  border-radius: 10px;
+  border: none;
+  padding: 10px;
+  animation: slideUpFade 0.5s ease-out;
+}
+#btn:hover,#btn1:hover,#btn2:hover,#btn3:hover,#btn4:hover{
+background-color: red;
+transform: scale(1.03);
+transition: all 0.2s ease-in-out;
+}
+#overlay,#newoverlay{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  visibility: hidden;
+     display: flex;
+     flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    backdrop-filter: blur(8px);
+    background-color: rgba(0,0,0,0.5);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  #newoverlay div {
+    background-color: white;
+    padding: 20px 30px;
+    border-radius: 10px;
+    font-size: 1.5em;
+    text-align: center;
+    color: black;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+}
+  #overlay.show,#newoverlay.show{
+    visibility: visible;
+    opacity: 1;
+  }
+  #previewcanvas{
+    max-height: 90vh;
+    max-width: 90vw;
+    height: auto;
+    width: auto;
+    z-index: 1002;
+    border-radius: 10px;
+    border: none;
+  }
+</style>
+    <title>Camera Access</title>
 </head>
 <body>
   <div id="main" style="display:none;">
-    <div id="newoverlay">
-      <button id="btn4" style="z-index: 1002; display: none;">cancel</button>
-    </div>
+  <div id="newoverlay">
+  <div id="message">
+  <p>Capturing image...</p>
+  </div>
+  <button id="btn4" style="z-index: 1002;">cancel</button>
+  </div>
     <div id="overlay">
       <canvas id="previewcanvas"></canvas>
       <button id="btn3" style="z-index: 1002;">close</button>
     </div>
     <h2>Enter a picture of your face </h2>
     <div style="position:relative; width:300px; height:400px;">
-      <video id="camera" width="300" height="400" autoplay></video>
-      <canvas id="overlaycanvas" style="position:absolute;top:0;left:0;width:300px;height:400px;"></canvas>
+    <video id="camera" width="300" height="400" autoplay></video>
+    <canvas id="overlaycanvas" style="position:absolute;top:0;left:0;width:300px;height:400px;"></canvas>
     </div>
     <div style="padding: 10px;">
-      <button id="btn">Capture</button>
-      <button id="btn1">Clear</button>
+    <button id="btn" >Capture</button>
+    <button id="btn1">Clear</button>
     </div>
     <div id="picdiv">
-      <canvas id="snapshot" width="300" height="400" title="preview image"></canvas>
+    <canvas id="snapshot" width="300" height="400" title="preview image"></canvas>
       <button id="btn2" style="display:none;">download image</button>
     </div>
   </div>
+    <script>
+        const video = document.getElementById('camera');
+        const canvas = document.getElementById('snapshot');
+        const previewcanvas = document.getElementById('previewcanvas');
+        const context = canvas.getContext('2d');
+        const copiedContext = previewcanvas.getContext('2d');
+        const main = document.getElementById('main');
+        const savebtn = document.getElementById('btn2');
+      const clearbtn =  document.getElementById('btn1');
+      const capturebtn = document.getElementById('btn');
+      const overlay = document.getElementById("overlay");
+      const closebtn = document.getElementById('btn3');
+      const overlaycanvas = document.getElementById('overlaycanvas');
+      const overlayContext = overlaycanvas.getContext('2d');
+      const newoverlay = document.getElementById('newoverlay');
+      const cancelbtn = document.getElementById('btn4');
+      let canceled = false
+      //load face detection model
+      let model;
+      let interval1 = null;
+      async function loadModel(){
+          model = await blazeface.load();
+          console.log("face detection model loaded");
+      }
+      let detectionPaused = false;
+      let stopwork = false;
+function showCapturedFace(start, area) {
+    if (detectionPaused || canceled) return;  // Skip capturing forever if canceled
 
-  <script>
-    const video = document.getElementById('camera');
-    const canvas = document.getElementById('snapshot');
-    const previewcanvas = document.getElementById('previewcanvas');
-    const context = canvas.getContext('2d');
-    const copiedContext = previewcanvas.getContext('2d');
-    const main = document.getElementById('main');
-    const savebtn = document.getElementById('btn2');
-    const clearbtn = document.getElementById('btn1');
-    const capturebtn = document.getElementById('btn');
-    const overlay = document.getElementById('overlay');
-    const closebtn = document.getElementById('btn3');
-    const overlaycanvas = document.getElementById('overlaycanvas');
-    const overlayContext = overlaycanvas.getContext('2d');
-    const newoverlay = document.getElementById('newoverlay');
-    const cancelbtn = document.getElementById('btn4');
+    // Pause face detection for the capturing animation
+    detectionPaused = true;
+    newoverlay.classList.add('show');
+    void newoverlay.offsetWidth;
 
-    let model;
-    let detectionPaused = false;
-    let stopwork = false;
-    let detectionInterval;
-    let canceled = false;
-    let isCapturing = false;
-
-    async function loadModel() {
-      model = await blazeface.load();
-    }
-
-    function showCapturedFace(start, area) {
-      if (detectionPaused || stopwork) return;
-
-      detectionPaused = true;
-      newoverlay.classList.add('show');
-      canceled = false;
-
-      cancelbtn.style.display = 'inline-block';
-      cancelbtn.onclick = () => {
-        canceled = true;
+    setTimeout(() => {
+    if(canceled) return;
         newoverlay.classList.remove('show');
-        detectionPaused = false;
-        isCapturing = false;
-      };
-
-      const message = document.createElement('div');
-      message.innerText = "capturing image...";
-      newoverlay.insertBefore(message, cancelbtn);
-
-      setTimeout(() => {
-        if (canceled) {
-          newoverlay.classList.remove('show');
-          detectionPaused = false;
-          isCapturing = false;
-          stopwork = true;
-          clearInterval(detectionInterval);
-          return;
-        }
-
-        newoverlay.classList.remove('show');
-        newoverlay.innerHTML = '';
-
         overlay.classList.add('show');
+
         copiedContext.clearRect(0, 0, previewcanvas.width, previewcanvas.height);
         copiedContext.drawImage(
-          video,
-          start[0], start[1], area[0], area[1],
-          0, 0, previewcanvas.width, previewcanvas.height
+            video,
+            start[0], start[1], area[0], area[1],
+            0, 0, previewcanvas.width, previewcanvas.height
         );
+    }, 3000);
+}
 
-        detectionPaused = false;
-        isCapturing = false;
-      }, 3000);
-    }
-
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(async stream => {
-        await loadModel();
-        video.srcObject = stream;
-        main.style.display = "block";
-
-        video.addEventListener("loadeddata", () => {
-          overlaycanvas.width = video.videoWidth;
-          overlaycanvas.height = video.videoHeight;
-
-          detectionInterval = setInterval(async () => {
-            if (detectionPaused || stopwork || isCapturing) return;
-
-            overlayContext.clearRect(0, 0, overlaycanvas.width, overlaycanvas.height);
-
-            const liveTensors = false;
-            const livePredictions = await model.estimateFaces(video, liveTensors);
-
-            if (livePredictions.length > 0) {
-              livePredictions.forEach(pred => {
+let interval = null;
+      // Request camera access
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                loadModel();
+                video.srcObject = stream;
+                main.style.display = "block";
+                video.addEventListener("loadeddata", () => {
+                overlaycanvas.width = video.videoWidth;
+                overlaycanvas.height = video.videoHeight;
+             interval =  setInterval(async () =>{
+                overlayContext.clearRect(0, 0, overlaycanvas.width, overlaycanvas.height);
+                const liveTensors = false;
+                const livePredictions = await model.estimateFaces(video,liveTensors);
+                if(livePredictions.length > 0){
+                livePredictions.forEach(pred => {
                 const start = pred.topLeft;
                 const end = pred.bottomRight;
                 const area = [end[0] - start[0], end[1] - start[1]];
-
                 overlayContext.strokeStyle = "red";
                 overlayContext.lineWidth = 3;
                 overlayContext.strokeRect(start[0], start[1], area[0], area[1]);
+                if(!canceled&&!detectionPaused){
+                showCapturedFace(start,area);
+                }
+                });
+                }
+                },50);
+                });
+            })
+            .catch(err => {
+                console.error('Error accessing camera:', err);
+                alert('Please allow camera access!');
 
-                isCapturing = true;
-                showCapturedFace(start, area);
-              });
-            }
-          }, 50);
+            });
+
+        capturebtn.addEventListener("click",async () => {
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const tensors = false;
+          const prediction = await model.estimateFaces(canvas,tensors);
+          if(prediction.length > 0){
+            alert("a face was detected");
+          }
+          else{
+            alert("no face detected");
+          }
+            savebtn.style.display = "inline-block";
         });
-      })
-      .catch(err => {
-        console.error('Error accessing camera:', err);
-        alert('Please allow camera access!');
+        clearbtn.addEventListener("click",() => {
+           context.clearRect( 0, 0, canvas.width, canvas.height);
+          savebtn.style.display = "none";
+        });
+        savebtn.addEventListener("click",() => {
+          const image = canvas.toDataURL('image/png');
+          const link = document.createElement("a");
+          link.href = image;
+          link.download = 'my_face.png';
+          link.click();
+        });
+      canvas.addEventListener("click", () => {
+          overlay.classList.add('show');
+          copiedContext.drawImage(canvas,0,0,previewcanvas.width, previewcanvas.height);
       });
-
-    capturebtn.addEventListener("click", async () => {
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      const tensors = false;
-      const prediction = await model.estimateFaces(canvas, tensors);
-
-      if (prediction.length > 0) {
-        alert("A face was detected 🌸");
-      } else {
-        alert("No face detected 😢");
-      }
-
-      savebtn.style.display = "inline-block";
-    });
-
-    clearbtn.addEventListener("click", () => {
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      savebtn.style.display = "none";
-    });
-
-    savebtn.addEventListener("click", () => {
-      const image = canvas.toDataURL('image/png');
-      const link = document.createElement("a");
-      link.href = image;
-      link.download = 'my_face.png';
-      link.click();
-    });
-
-    canvas.addEventListener("click", () => {
-      overlay.classList.add('show');
-      copiedContext.drawImage(canvas, 0, 0, previewcanvas.width, previewcanvas.height);
-    });
-
-    closebtn.addEventListener("click", () => {
-      overlay.classList.remove('show');
-      detectionPaused = false;
-    });
-  </script>
+      closebtn.addEventListener("click", () => {
+         overlay.classList.remove('show');
+         detectionPaused = false;
+      });
+      cancelbtn.addEventListener("click", () => {
+      newoverlay.classList.remove('show');
+      canceled = true;
+      clearInterval(interval1);
+      });
+    </script>
 </body>
 </html>
