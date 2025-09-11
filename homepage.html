@@ -4,7 +4,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script  src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"></script>
-  <script defer src="/public/face-api.min.js"></script>
+  <script defer src="/public/face-api.js"></script>
 <style>
   @keyframes slideUpFade{
 from{
@@ -151,19 +151,19 @@ transition: all 0.2s ease-in-out;
       let model;
       let interval1 = null;
       savebtn_clone = savebtn.cloneNode(true);
-      async function loadFaceAPIModels() {
-    await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
-    await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
-    await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
-    console.log('Face-api models loaded');
-}
-      async function loadModel(){
-          model = await blazeface.load();
-          console.log("face detection model loaded");
-      }
+      Promise.all([
+    faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
+    faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
+    faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
+    blazeface.load()
+]).then((results) => {
+    model = results[3]; // blazeface model is the 4th one in the promise array
+    console.log('All face models loaded successfully');
+}).catch(err => {
+    console.error("Error loading models:", err);
+    alert("Could not load face recognition models. Please refresh the page.");
+});
 async function matchFaces(canvas) {
-    await loadFaceAPIModels();
-
     const storedDataURL = sessionStorage.getItem('imageData');
     if (!storedDataURL) {
         alert("No stored image found");
@@ -234,7 +234,6 @@ let interval = null;
       // Request camera access
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
-                loadModel();
                 video.srcObject = stream;
                 main.style.display = "block";
                 video.addEventListener("loadeddata", () => {
