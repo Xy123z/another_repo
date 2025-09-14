@@ -229,20 +229,45 @@ async function matchFaces(canvasEl) {
     const storedImg = await loadFomDataURL(storedDataURL);
     const storedCanvas = imageToCanvas(storedImg);
 
-    // Use the CORRECT options format for v0.22.2
-    const options = new faceapi.SsdMobilenetv1Options({
-      minConfidence: 0.5
-    });
+    // CORRECT options format for v0.22.2
+    const options = {
+      inputSize: 416,
+      scoreThreshold: 0.5
+    };
 
     console.log('Options:', options);
     console.log('Canvas dimensions:', canvasEl.width, canvasEl.height);
     console.log('Stored canvas dimensions:', storedCanvas.width, storedCanvas.height);
 
-    // For v0.22.2, use this approach (NO method chaining)
-    const newDetections = await faceapi.detectAllFaces(canvasEl, options);
-    console.log('New detections:', newDetections);
+    // Method 1: Try SSD Mobilenet first
+    let newDetections, storedDetections;
 
-    const storedDetections = await faceapi.detectAllFaces(storedCanvas, options);
+    try {
+      newDetections = await faceapi
+        .detectAllFaces(canvasEl, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+        .withFaceLandmarks()
+        .withFaceDescriptors();
+
+      storedDetections = await faceapi
+        .detectAllFaces(storedCanvas, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+        .withFaceLandmarks()
+        .withFaceDescriptors();
+    } catch (ssdError) {
+      console.log('SSD failed, trying TinyFaceDetector...');
+
+      // Fallback to TinyFaceDetector
+      newDetections = await faceapi
+        .detectAllFaces(canvasEl, new faceapi.TinyFaceDetectorOptions(options))
+        .withFaceLandmarks()
+        .withFaceDescriptors();
+
+      storedDetections = await faceapi
+        .detectAllFaces(storedCanvas, new faceapi.TinyFaceDetectorOptions(options))
+        .withFaceLandmarks()
+        .withFaceDescriptors();
+    }
+
+    console.log('New detections:', newDetections);
     console.log('Stored detections:', storedDetections);
 
     if (storedDetections.length !== 1 || newDetections.length !== 1) {
@@ -251,14 +276,16 @@ async function matchFaces(canvasEl) {
       return;
     }
 
-    // Get landmarks and descriptors separately
-    const newLandmarks = await faceapi.detectFaceLandmarks(canvasEl, newDetections);
-    const newDescriptors = await faceapi.computeFaceDescriptors(canvasEl, newLandmarks);
+    // Get descriptors from the detection results
+    const newDescriptor = newDetections[0].descriptor;
+    const storedDescriptor = storedDetections[0].descriptor;
 
-    const storedLandmarks = await faceapi.detectFaceLandmarks(storedCanvas, storedDetections);
-    const storedDescriptors = await faceapi.computeFaceDescriptors(storedCanvas, storedLandmarks);
+    if (!newDescriptor || !storedDescriptor) {
+      alert('Could not extract face descriptors');
+      return;
+    }
 
-    const distance = faceapi.euclideanDistance(storedDescriptors[0], newDescriptors[0]);
+    const distance = faceapi.euclideanDistance(storedDescriptor, newDescriptor);
     const threshold = 0.6;
 
     console.log('Distance:', distance);
@@ -273,9 +300,7 @@ async function matchFaces(canvasEl) {
     console.error('matchFaces error:', err);
     alert('Face comparison error — see console for details.');
   }
-}
-
-      let detectionPaused = false;
+}      let detectionPaused = false;
       let stopwork = false;
 function showCapturedFace(start, area) {
     if (detectionPaused || canceled) return;  // Skip capturing forever if canceled
