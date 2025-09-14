@@ -194,14 +194,15 @@ transition: all 0.2s ease-in-out;
       savebtn.disabled = false;
       savebtn_clone.disabled = false;
       })();
-      function loadFomDataURL(DataURL){
-      return new Promise((resolve,reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = (err) => reject(img);
-      img.src = DataURL;
-      });
-      }
+      async function loadImageFromDataURL(dataURL) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = dataURL;
+    });
+}
       function imageToCanvas(img) {
   const offCanvas = document.createElement('canvas');
   offCanvas.width = img.width;
@@ -210,119 +211,56 @@ transition: all 0.2s ease-in-out;
   ctx.drawImage(img, 0, 0, img.width, img.height);
   return offCanvas;
 }
-async function matchFaces(canvasEl) {
-  try {
-    console.log('Starting face matching...');
-
-    if (!canvasEl || canvasEl.width === 0 || canvasEl.height === 0) {
-      alert("Canvas is empty — nothing to compare.");
-      return;
-    }
-
-    const storedDataURL = sessionStorage.getItem('imageData');
-    if (!storedDataURL) {
-      alert("No stored image found");
-      return;
-    }
-
-    // Load stored image
-    const storedImg = await loadFomDataURL(storedDataURL);
-    
-    // Instead of creating a canvas, use the image directly
-    // OR ensure the canvas is properly set up
-    console.log('Canvas dimensions:', canvasEl.width, canvasEl.height);
-    console.log('Stored image dimensions:', storedImg.width, storedImg.height);
-
-    let newDetections, storedDetections;
-
+async function compareFaces() {
     try {
-      // Detect faces in current canvas
-      /*newDetections = await faceapi
-        .detectAllFaces(canvasEl)
-        .withFaceLandmarks()
-        .withFaceDescriptors();*/
+        const storedDataURL = sessionStorage.getItem('imageData');
+        if (!storedDataURL) {
+            alert('🌸 No stored image found in session storage');
+            return;
+        }
 
-      // Use the image directly instead of canvas - this often works better
-      storedDetections = await faceapi
-        .detectAllFaces(storedImg)
-        .withFaceLandmarks()
-        .withFaceDescriptors();
+        const currentCanvas = document.getElementById('snapshot');
+        if (!currentCanvas || currentCanvas.width === 0 || currentCanvas.height === 0) {
+            alert('🌸 Current snapshot is empty');
+            return;
+        }
 
-      // Alternative approach if the above doesn't work:
-      // Create a properly formatted canvas
-      /*
-      const storedCanvas = document.createElement('canvas');
-      storedCanvas.width = storedImg.width;
-      storedCanvas.height = storedImg.height;
-      const ctx = storedCanvas.getContext('2d');
-      ctx.drawImage(storedImg, 0, 0);
-      
-      // Ensure the canvas is added to DOM temporarily (some browsers require this)
-      document.body.appendChild(storedCanvas);
-      storedCanvas.style.display = 'none';
-      
-      storedDetections = await faceapi
-        .detectAllFaces(storedCanvas)
-        .withFaceLandmarks()
-        .withFaceDescriptors();
-        
-      // Clean up
-      document.body.removeChild(storedCanvas);
-      */
+        // Load stored image
+        const storedImage = await loadImageFromDataURL(storedDataURL);
 
-    } catch (error) {
-      console.error('Face detection failed:', error);
-      alert('Face detection failed. Make sure face models are loaded and try again.');
-      return;
+        // Detect faces and compute descriptors
+        const [storedDetection, currentDetection] = await Promise.all([
+            faceapi.detectSingleFace(storedImage).withFaceLandmarks().withFaceDescriptor(),
+            faceapi.detectSingleFace(currentCanvas).withFaceLandmarks().withFaceDescriptor()
+        ]);
+
+        if (!storedDetection) {
+            alert('🌸 No face detected in stored image');
+            return;
+        }
+
+        if (!currentDetection) {
+            alert('🌸 No face detected in current image');
+            return;
+        }
+
+        const distance = faceapi.euclideanDistance(
+            storedDetection.descriptor,
+            currentDetection.descriptor
+        );
+
+        const threshold = 0.6;
+
+        if (distance < threshold) {
+            alert(`✅ Face Match! Similarity: ${(1 - distance).toFixed(2)} (Distance: ${distance.toFixed(3)})`);
+        } else {
+            alert(`❌ Faces do not match.\nSimilarity: ${(1 - distance).toFixed(2)} (Distance: ${distance.toFixed(3)})`);
+        }
+
+    } catch (err) {
+        console.error('🌧️ Matching failed:', err);
+        alert('🌧️ Error occurred during face matching. Check console for details.');
     }
-
-    console.log('New detections:', newDetections);
-    console.log('Stored detections:', storedDetections);
-
-    if (storedDetections.length === 0) {
-      alert('No face detected in stored image');
-      return;
-    }
-    
-    if (newDetections.length === 0) {
-      alert('No face detected in current image');
-      return;
-    }
-    
-    if (storedDetections.length > 1 || newDetections.length > 1) {
-      alert('Multiple faces detected. Please ensure exactly one face in both images.\n\n' +
-            'Found: ' + storedDetections.length + ' in stored, ' + newDetections.length + ' in current');
-      return;
-    }
-
-    // Get descriptors from the detection results
-    const newDescriptor = newDetections[0].descriptor;
-    const storedDescriptor = storedDetections[0].descriptor;
-
-    if (!newDescriptor || !storedDescriptor) {
-      alert('Could not extract face descriptors');
-      return;
-    }
-
-    // Calculate Euclidean distance between face descriptors
-    const distance = faceapi.euclideanDistance(storedDescriptor, newDescriptor);
-    
-    // Threshold for matching (lower = more strict, higher = more lenient)
-    const threshold = 0.6;
-
-    console.log('Face match distance:', distance);
-    console.log('Threshold:', threshold);
-
-    if (distance < threshold) {
-      alert(`✅ Face Match Successful!\n\nSimilarity score: ${(1 - distance).toFixed(2)}\nDistance: ${distance.toFixed(3)}\n\nThe faces match!`);
-    } else {
-      alert(`❌ Face Match Failed\n\nSimilarity score: ${(1 - distance).toFixed(2)}\nDistance: ${distance.toFixed(3)}\n\nThe faces do not match.`);
-    }
-
-  } catch (err) {
-    console.error('matchFaces error:', err);
-    alert('Face comparison error:\n' + err.message + '\n\nCheck console for details.');
-  }
 }      let detectionPaused = false;
       let stopwork = false;
 function showCapturedFace(start, area) {
@@ -403,10 +341,10 @@ let interval = null;
           savebtn.style.display = "none";
         });
         savebtn.addEventListener("click", async () => {
-        await matchFaces(canvas);
+        await compareFaces();
         });
          savebtn_clone.addEventListener("click",async () => {
-         await matchFaces(previewcanvas);
+         await compareFaces();
         });
       canvas.addEventListener("click", () => {
           overlay.classList.add('show');
