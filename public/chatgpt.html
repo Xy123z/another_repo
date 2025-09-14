@@ -1,320 +1,231 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
-  <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
-  <style>
-    @keyframes slideUpFade {
-      from {
-        transform: translateY(20px);
-        opacity: 0;
-      }
-
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
-    }
-
-    body {
-      background-color: #ff9999;
-      display: flex;
-      align-items: center;
-      flex-direction: column;
-    }
-
-    #camera {
-      border: none;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-      display: block;
-      width: 300px;
-      height: 400px;
-      object-fit: cover;
-      padding: 5px;
-      animation: slideUpFade 0.5s ease-out;
-    }
-
-    #picdiv {
-      border: 2px solid white;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-      display: block;
-      width: 300px;
-      height: 400px;
-      object-fit: cover;
-      animation: slideUpFade 0.5s ease-out;
-    }
-
-    #picdiv>canvas,
-    #previewcanvas {
-      padding: 5px;
-      border: none;
-      border-radius: 10px;
-    }
-
-    #btn,
-    #btn1,
-    #btn2,
-    #btn3,
-    #btn4 {
-      background-color: FloralWhite;
-      border-radius: 10px;
-      border: none;
-      padding: 10px;
-      animation: slideUpFade 0.5s ease-out;
-    }
-
-    #btn:hover,
-    #btn1:hover,
-    #btn2:hover,
-    #btn3:hover,
-    #btn4:hover {
-      background-color: red;
-      transform: scale(1.03);
-      transition: all 0.2s ease-in-out;
-    }
-
-    #overlay,
-    #newoverlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      visibility: hidden;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 1001;
-      backdrop-filter: blur(8px);
-      background-color: rgba(0, 0, 0, 0.5);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    #newoverlay div {
-      background-color: white;
-      padding: 20px 30px;
-      border-radius: 10px;
-      font-size: 1.5em;
-      text-align: center;
-      color: black;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-    }
-
-    #overlay.show,
-    #newoverlay.show {
-      visibility: visible;
-      opacity: 1;
-    }
-
-    #previewcanvas {
-      max-height: 90vh;
-      max-width: 90vw;
-      height: auto;
-      width: auto;
-      z-index: 1002;
-      border-radius: 10px;
-      border: none;
-    }
-  </style>
-  <title>Face Comparison</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"></script>
+<style>
+  @keyframes slideUpFade {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  body {
+    background-color: #ff9999;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+  }
+  #camera {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    display: block;
+    width: 300px;
+    height: 400px;
+    object-fit: cover;
+    padding: 5px;
+    animation: slideUpFade 0.5s ease-out;
+  }
+  #previewcanvas {
+    padding: 5px;
+    border: none;
+    border-radius: 10px;
+  }
+  #btn2 {
+    background-color: FloralWhite;
+    border-radius: 10px;
+    border: none;
+    padding: 10px;
+    animation: slideUpFade 0.5s ease-out;
+  }
+  #btn2:hover {
+    background-color: red;
+    transform: scale(1.03);
+    transition: all 0.2s ease-in-out;
+  }
+  #overlay, #newoverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    backdrop-filter: blur(8px);
+    background-color: rgba(0,0,0,0.5);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  #newoverlay div {
+    background-color: white;
+    padding: 20px 30px;
+    border-radius: 10px;
+    font-size: 1.5em;
+    text-align: center;
+    color: black;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+  }
+  #overlay.show, #newoverlay.show {
+    visibility: visible;
+    opacity: 1;
+  }
+  #previewcanvas {
+    max-height: 90vh;
+    max-width: 90vw;
+    height: auto;
+    width: auto;
+    z-index: 1002;
+    border-radius: 10px;
+    border: none;
+  }
+</style>
+<title>Face Comparison</title>
 </head>
-
 <body>
-  <div id="main" style="display:none;">
-    <div id="newoverlay">
-      <div id="message">
-        <p id="p">Capturing image...</p>
-      </div>
-      <button id="btn4" style="z-index: 1002;">cancel</button>
-    </div>
-    <div id="overlay">
-      <canvas id="previewcanvas"></canvas>
-      <button id="btn3" style="z-index: 1002;">close</button>
-    </div>
-
-    <h2>Enter a picture of your face </h2>
-    <div style="position:relative; width:300px; height:400px;">
-      <video id="camera" width="300" height="400" autoplay></video>
-      <canvas id="overlaycanvas" style="position:absolute;top:0;left:0;width:300px;height:400px;"></canvas>
-    </div>
-
-    <div style="padding: 10px;">
-      <button id="btn" style="display:none;">Capture manually</button>
-      <button id="btn1" style="display:none;">Clear</button>
-    </div>
-
-    <div id="picdiv" style="display:none;">
-      <canvas id="snapshot" width="300" height="400" title="preview image"></canvas>
-      <button id="btn2" style="display:inline-block;">run scanning</button>
+<div id="main" style="display:none;">
+  <div id="newoverlay">
+    <div id="message">
+      <p id="p">Capturing second face...</p>
     </div>
   </div>
+  <div id="overlay">
+    <canvas id="previewcanvas"></canvas>
+    <button id="btn2" style="display:none;">Compare Faces</button>
+  </div>
+  <div style="position:relative; width:300px; height:400px;">
+    <video id="camera" width="300" height="400" autoplay></video>
+    <canvas id="overlaycanvas" style="position:absolute;top:0;left:0;width:300px;height:400px;"></canvas>
+  </div>
+</div>
 
-  <script>
-    const video = document.getElementById('camera');
-    const canvas = document.getElementById('snapshot');
-    const context = canvas.getContext('2d');
-    const main = document.getElementById('main');
-    const savebtn = document.getElementById('btn2');
-    const overlay = document.getElementById("overlay");
-    const closebtn = document.getElementById('btn3');
-    const overlaycanvas = document.getElementById('overlaycanvas');
-    const overlayContext = overlaycanvas.getContext('2d');
-    const newoverlay = document.getElementById('newoverlay');
-    const cancelbtn = document.getElementById('btn4');
+<script>
+  const video = document.getElementById('camera');
+  const previewcanvas = document.getElementById('previewcanvas');
+  const previewCtx = previewcanvas.getContext('2d');
+  const main = document.getElementById('main');
+  const savebtn = document.getElementById('btn2');
+  const overlaycanvas = document.getElementById("overlaycanvas");
+  const overlayCtx = overlaycanvas.getContext('2d');
+  const overlay = document.getElementById("overlay");
+  const newoverlay = document.getElementById('newoverlay');
 
-    let modelLoaded = false;
+  let model;
+  let detectionPaused = false;
 
-    // Load face-api models
-    async function loadFaceAPIModels() {
-      await faceapi.nets.ssdMobilenetv1.loadFromUri('./models');
-      await faceapi.nets.faceRecognitionNet.loadFromUri('./models');
-      await faceapi.nets.faceLandmark68Net.loadFromUri('./models');
-      modelLoaded = true;
-      console.log('🌸 All models loaded');
-    }
+  async function loadModel(){
+    model = await blazeface.load();
+    console.log("Model loaded.");
+  }
 
-    async function loadImageFromDataURL(dataURL) {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-        img.src = dataURL;
-      });
-    }
-
-    async function canvasToImage(canvas) {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-        img.src = canvas.toDataURL();
-      });
-    }
-
-    async function compareFaces() {
-      if (!modelLoaded) {
-        alert('🌧️ Models not loaded yet.');
-        return;
-      }
-
-      const storedDataURL = sessionStorage.getItem('imageData');
-      if (!storedDataURL) {
-        alert('🌸 No stored image in session storage');
-        return;
-      }
-
-      const storedImage = await loadImageFromDataURL(storedDataURL);
-      const currentImage = await canvasToImage(canvas);
-
-      const [storedDetection, currentDetection] = await Promise.all([
-        faceapi.detectSingleFace(storedImage).withFaceLandmarks().withFaceDescriptor(),
-        faceapi.detectSingleFace(currentImage).withFaceLandmarks().withFaceDescriptor()
-      ]);
-
-      if (!storedDetection) {
-        alert('🌸 No face found in stored image');
-        return;
-      }
-
-      if (!currentDetection) {
-        alert('🌸 No face found in current image');
-        return;
-      }
-
-      const distance = faceapi.euclideanDistance(
-        storedDetection.descriptor,
-        currentDetection.descriptor
-      );
-
-      const threshold = 0.6;
-
-      if (distance < threshold) {
-        alert(`✅ Faces Match!\nSimilarity: ${(1 - distance).toFixed(2)}`);
-      } else {
-        alert(`❌ Faces don’t match\nSimilarity: ${(1 - distance).toFixed(2)}`);
-      }
-    }
-
-    let detectionPaused = false;
-    let canceled = false;
-    let interval = null;
-
-    function showCapturedFace(start, area) {
-      if (detectionPaused || canceled) return;
-      detectionPaused = true;
-      newoverlay.classList.add('show');
-
-      setTimeout(() => {
-        if (canceled) return;
-        newoverlay.classList.remove('show');
-        overlay.classList.add('show');
-        canvas.width = area[0];
-        canvas.height = area[1];
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        context.drawImage(
-          video,
-          start[0], start[1], area[0], area[1],
-          0, 0, canvas.width, canvas.height
-        );
-      }, 3000);
-    }
-
-    // Start camera + face detection
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(async (stream) => {
-        await loadFaceAPIModels();
-        video.srcObject = stream;
-        main.style.display = "block";
-
-        video.addEventListener("loadeddata", () => {
-          overlaycanvas.width = video.videoWidth;
-          overlaycanvas.height = video.videoHeight;
-
-          interval = setInterval(async () => {
-            overlayContext.clearRect(0, 0, overlaycanvas.width, overlaycanvas.height);
-
-            const detections = await faceapi.detectAllFaces(video).withFaceLandmarks();
-
-            if (detections.length > 0) {
-              detections.forEach(pred => {
-                const start = pred.detection.box.topLeft;
-                const area = [pred.detection.box.width, pred.detection.box.height];
-
-                overlayContext.strokeStyle = "red";
-                overlayContext.lineWidth = 3;
-                overlayContext.strokeRect(start[0], start[1], area[0], area[1]);
-
-                if (!canceled && !detectionPaused) {
-                  showCapturedFace(start, area);
-                }
-              });
-            }
-          }, 100);
-        });
-      });
-
-    cancelbtn.addEventListener("click", () => {
+  function showCapturedFace(start, area) {
+    newoverlay.classList.add('show');
+    void newoverlay.offsetWidth;
+    setTimeout(() => {
       newoverlay.classList.remove('show');
-      canceled = true;
-      clearInterval(interval);
+      overlay.classList.add('show');
+      previewCtx.clearRect(0, 0, previewcanvas.width, previewcanvas.height);
+      previewCtx.filter = 'grayscale(100%) contrast(200%)';
+      previewCtx.drawImage(
+        video,
+        start[0], start[1], area[0], area[1],
+        0, 0, previewcanvas.width, previewcanvas.height
+      );
+      savebtn.style.display = "block";
+    }, 3000);
+  }
+
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+      loadModel();
+      video.srcObject = stream;
+      main.style.display = "block";
+      video.addEventListener("loadeddata", () => {
+        overlaycanvas.width = video.videoWidth;
+        overlaycanvas.height = video.videoHeight;
+
+        const interval = setInterval(async () => {
+          overlayCtx.clearRect(0, 0, overlaycanvas.width, overlaycanvas.height);
+          const predictions = await model.estimateFaces(video, false);
+
+          if (predictions.length > 0) {
+            predictions.forEach(pred => {
+              const start = pred.topLeft;
+              const end = pred.bottomRight;
+              const area = [end[0] - start[0], end[1] - start[1]];
+
+              overlayCtx.strokeStyle = "red";
+              overlayCtx.lineWidth = 3;
+              overlayCtx.strokeRect(start[0], start[1], area[0], area[1]);
+
+              if (!detectionPaused) {
+                detectionPaused = true;
+                showCapturedFace(start, area);
+              }
+            });
+          }
+        }, 100);
+      });
+    })
+    .catch(err => {
+      console.error('Camera error:', err);
+      alert('Please allow camera access!');
     });
 
-    savebtn.addEventListener('click', compareFaces);
+  savebtn.addEventListener("click", () => {
+    const newFaceData = previewcanvas.toDataURL();
+    const oldFaceData = sessionStorage.getItem('imageData');
 
-    closebtn.addEventListener('click', () => {
-      overlay.classList.remove('show');
-      detectionPaused = false;
-    });
+    if (!oldFaceData) {
+      alert("No reference face found in session storage.");
+      return;
+    }
 
-  </script>
+    // Simple comparison: pixel-wise difference
+    const img1 = new Image();
+    const img2 = new Image();
+    let imagesLoaded = 0;
+
+    img1.onload = () => {
+      img2.onload = () => {
+        const tempCanvas1 = document.createElement('canvas');
+        const tempCanvas2 = document.createElement('canvas');
+        const ctx1 = tempCanvas1.getContext('2d');
+        const ctx2 = tempCanvas2.getContext('2d');
+
+        tempCanvas1.width = 100;
+        tempCanvas1.height = 100;
+        tempCanvas2.width = 100;
+        tempCanvas2.height = 100;
+
+        ctx1.drawImage(img1, 0, 0, 100, 100);
+        ctx2.drawImage(img2, 0, 0, 100, 100);
+
+        const data1 = ctx1.getImageData(0, 0, 100, 100).data;
+        const data2 = ctx2.getImageData(0, 0, 100, 100).data;
+
+        let diff = 0;
+        for (let i = 0; i < data1.length; i += 4) {
+          diff += Math.abs(data1[i] - data2[i]);       // R channel
+          diff += Math.abs(data1[i+1] - data2[i+1]); // G channel
+          diff += Math.abs(data1[i+2] - data2[i+2]); // B channel
+        }
+
+        const avgDiff = diff / (100 * 100 * 3);
+        if (avgDiff < 20) {  // Empirical threshold
+          alert("😊 Faces matched! They are same.");
+        } else {
+          alert("😢 Faces did not match.");
+        }
+
+      };
+      img2.src = newFaceData;
+    };
+    img1.src = oldFaceData;
+  });
+</script>
 </body>
-
 </html>
