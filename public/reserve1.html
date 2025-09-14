@@ -229,50 +229,48 @@ async function matchFaces(canvasEl) {
     const storedImg = await loadFomDataURL(storedDataURL);
     const storedCanvas = imageToCanvas(storedImg);
 
-    // CORRECT options format for v0.22.2
-    const options = {
-      inputSize: 416,
-      scoreThreshold: 0.5
-    };
-
-    console.log('Options:', options);
     console.log('Canvas dimensions:', canvasEl.width, canvasEl.height);
     console.log('Stored canvas dimensions:', storedCanvas.width, storedCanvas.height);
 
-    // Method 1: Try SSD Mobilenet first
+    // Simplified approach - let face-api.js use whatever detector is loaded
+    // without specifying options
     let newDetections, storedDetections;
 
     try {
+      // Just use detectAllFaces without any options
+      // This will use whatever detector was successfully loaded
       newDetections = await faceapi
-        .detectAllFaces(canvasEl, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+        .detectAllFaces(canvasEl)
         .withFaceLandmarks()
         .withFaceDescriptors();
 
       storedDetections = await faceapi
-        .detectAllFaces(storedCanvas, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
-        .withFaceLandmarks()
-        .withFaceDescriptors();
-    } catch (ssdError) {
-      console.log('SSD failed, trying TinyFaceDetector...');
-
-      // Fallback to TinyFaceDetector
-      newDetections = await faceapi
-        .detectAllFaces(canvasEl, new faceapi.TinyFaceDetectorOptions(options))
+        .detectAllFaces(storedCanvas)
         .withFaceLandmarks()
         .withFaceDescriptors();
 
-      storedDetections = await faceapi
-        .detectAllFaces(storedCanvas, new faceapi.TinyFaceDetectorOptions(options))
-        .withFaceLandmarks()
-        .withFaceDescriptors();
+    } catch (error) {
+      console.error('Face detection failed:', error);
+      alert('Face detection failed. Make sure face models are loaded and try again.');
+      return;
     }
 
     console.log('New detections:', newDetections);
     console.log('Stored detections:', storedDetections);
 
-    if (storedDetections.length !== 1 || newDetections.length !== 1) {
-      alert('Please ensure exactly one face in both images. Found: ' +
-            storedDetections.length + ' vs ' + newDetections.length);
+    if (storedDetections.length === 0) {
+      alert('No face detected in stored image');
+      return;
+    }
+    
+    if (newDetections.length === 0) {
+      alert('No face detected in current image');
+      return;
+    }
+    
+    if (storedDetections.length > 1 || newDetections.length > 1) {
+      alert('Multiple faces detected. Please ensure exactly one face in both images.\n\n' +
+            'Found: ' + storedDetections.length + ' in stored, ' + newDetections.length + ' in current');
       return;
     }
 
@@ -285,20 +283,25 @@ async function matchFaces(canvasEl) {
       return;
     }
 
+    // Calculate Euclidean distance between face descriptors
     const distance = faceapi.euclideanDistance(storedDescriptor, newDescriptor);
+    
+    // Threshold for matching (lower = more strict, higher = more lenient)
+    // Typical values: 0.4 (very strict) to 0.6 (normal) to 0.8 (lenient)
     const threshold = 0.6;
 
-    console.log('Distance:', distance);
+    console.log('Face match distance:', distance);
+    console.log('Threshold:', threshold);
 
     if (distance < threshold) {
-      alert(`Match found! Distance: ${distance.toFixed(3)}`);
+      alert(`✅ Face Match Successful!\n\nSimilarity score: ${(1 - distance).toFixed(2)}\nDistance: ${distance.toFixed(3)}\n\nThe faces match!`);
     } else {
-      alert(`No match… Distance: ${distance.toFixed(3)}`);
+      alert(`❌ Face Match Failed\n\nSimilarity score: ${(1 - distance).toFixed(2)}\nDistance: ${distance.toFixed(3)}\n\nThe faces do not match.`);
     }
 
   } catch (err) {
     console.error('matchFaces error:', err);
-    alert('Face comparison error — see console for details.');
+    alert('Face comparison error:\n' + err.message + '\n\nCheck console for details.');
   }
 }      let detectionPaused = false;
       let stopwork = false;
