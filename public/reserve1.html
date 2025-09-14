@@ -341,10 +341,10 @@ let interval = null;
           savebtn.style.display = "none";
         });
         savebtn.addEventListener("click", async () => {
-        await compareFaces();
+        await compareFaces(canvas);
         });
          savebtn_clone.addEventListener("click",async () => {
-         await compareFaces();
+         await compareFaces(previewcanvas);
         });
       canvas.addEventListener("click", () => {
           overlay.classList.add('show');
