@@ -227,27 +227,48 @@ async function matchFaces(canvasEl) {
 
     // Load stored image
     const storedImg = await loadFomDataURL(storedDataURL);
-    const storedCanvas = imageToCanvas(storedImg);
-
+    
+    // Instead of creating a canvas, use the image directly
+    // OR ensure the canvas is properly set up
     console.log('Canvas dimensions:', canvasEl.width, canvasEl.height);
-    console.log('Stored canvas dimensions:', storedCanvas.width, storedCanvas.height);
+    console.log('Stored image dimensions:', storedImg.width, storedImg.height);
 
-    // Simplified approach - let face-api.js use whatever detector is loaded
-    // without specifying options
     let newDetections, storedDetections;
 
     try {
-      // Just use detectAllFaces without any options
-      // This will use whatever detector was successfully loaded
+      // Detect faces in current canvas
       newDetections = await faceapi
         .detectAllFaces(canvasEl)
         .withFaceLandmarks()
         .withFaceDescriptors();
 
+      // Use the image directly instead of canvas - this often works better
+      storedDetections = await faceapi
+        .detectAllFaces(storedImg)
+        .withFaceLandmarks()
+        .withFaceDescriptors();
+
+      // Alternative approach if the above doesn't work:
+      // Create a properly formatted canvas
+      /*
+      const storedCanvas = document.createElement('canvas');
+      storedCanvas.width = storedImg.width;
+      storedCanvas.height = storedImg.height;
+      const ctx = storedCanvas.getContext('2d');
+      ctx.drawImage(storedImg, 0, 0);
+      
+      // Ensure the canvas is added to DOM temporarily (some browsers require this)
+      document.body.appendChild(storedCanvas);
+      storedCanvas.style.display = 'none';
+      
       storedDetections = await faceapi
         .detectAllFaces(storedCanvas)
         .withFaceLandmarks()
         .withFaceDescriptors();
+        
+      // Clean up
+      document.body.removeChild(storedCanvas);
+      */
 
     } catch (error) {
       console.error('Face detection failed:', error);
@@ -287,7 +308,6 @@ async function matchFaces(canvasEl) {
     const distance = faceapi.euclideanDistance(storedDescriptor, newDescriptor);
     
     // Threshold for matching (lower = more strict, higher = more lenient)
-    // Typical values: 0.4 (very strict) to 0.6 (normal) to 0.8 (lenient)
     const threshold = 0.6;
 
     console.log('Face match distance:', distance);
