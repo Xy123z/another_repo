@@ -30,6 +30,13 @@
     padding: 5px;
     border: none;
     border-radius: 10px;
+    max-height: 90vh;
+    max-width: 90vw;
+    height: auto;
+    width: auto;
+    z-index: 1002;
+    border-radius: 10px;
+    border: none;
   }
   #btn2 {
     background-color: FloralWhite;
@@ -73,17 +80,8 @@
     visibility: visible;
     opacity: 1;
   }
-  #previewcanvas {
-    max-height: 90vh;
-    max-width: 90vw;
-    height: auto;
-    width: auto;
-    z-index: 1002;
-    border-radius: 10px;
-    border: none;
-  }
 </style>
-<title>Advanced Face Comparison</title>
+<title>Face Comparison</title>
 </head>
 <body>
 <div id="main" style="display:none;">
@@ -98,7 +96,7 @@
   </div>
   <div style="position:relative; width:300px; height:400px;">
     <video id="camera" width="300" height="400" autoplay></video>
-    <canvas id="overlaycanvas" style="position:absolute;top:0;left:0;width:300px;height:400px;"></canvas>
+    <canvas id="overlaycanvas" style="position:absolute; top:0; left:0; width:300px; height:400px;"></canvas>
   </div>
 </div>
 
@@ -117,9 +115,9 @@
 
   async function loadModels() {
     await faceapi.nets.tinyFaceDetector.loadFromUri('/models/');
-    await faceapi.nets.faceRecognitionNet.loadFromUri('/models/');
     await faceapi.nets.faceLandmark68Net.loadFromUri('/models/');
-    console.log("All face-api.js models loaded");
+    await faceapi.nets.faceRecognitionNet.loadFromUri('/models/');
+    console.log("✨ All face-api models are fully loaded");
   }
 
   function showCapturedFace(start, area) {
@@ -138,36 +136,41 @@
     }, 3000);
   }
 
-  navigator.mediaDevices.getUserMedia({ video: true })
-    .then(stream => {
-      loadModels();
-      video.srcObject = stream;
-      main.style.display = "block";
-      video.addEventListener("loadeddata", () => {
-        overlaycanvas.width = video.videoWidth;
-        overlaycanvas.height = video.videoHeight;
+  function startCameraAndDetect() {
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+        main.style.display = "block";
 
-        const interval = setInterval(async () => {
-          overlayCtx.clearRect(0, 0, overlaycanvas.width, overlaycanvas.height);
-          const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
+        video.addEventListener("loadeddata", () => {
+          overlaycanvas.width = video.videoWidth;
+          overlaycanvas.height = video.videoHeight;
 
-          if (detections.length > 0 && !detectionPaused) {
-            detectionPaused = true;
+          const interval = setInterval(async () => {
+            const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
+            
+            if (detections.length > 0 && !detectionPaused) {
+              detectionPaused = true;
 
-            const start = detections[0].detection.box.topLeft;
-            const area = [detections[0].detection.box.width, detections[0].detection.box.height];
-            showCapturedFace(start, area);
+              const start = detections[0].detection.box.topLeft;
+              const area = [detections[0].detection.box.width, detections[0].detection.box.height];
+              showCapturedFace(start, area);
 
-            // Save the descriptor for comparison later
-            window.capturedDescriptor = detections[0].descriptor;
-          }
-        }, 200);
+              window.capturedDescriptor = detections[0].descriptor;
+            }
+          }, 200);
+        });
+      })
+      .catch(err => {
+        console.error('Camera error:', err);
+        alert('Please allow camera access!');
       });
-    })
-    .catch(err => {
-      console.error('Camera error:', err);
-      alert('Please allow camera access!');
-    });
+  }
+
+  loadModels().then(() => {
+    console.log("🌙 Models loaded, starting camera now.");
+    startCameraAndDetect();
+  });
 
   savebtn.addEventListener("click", async () => {
     const oldFaceData = sessionStorage.getItem('imageData');
@@ -176,14 +179,13 @@
       return;
     }
 
-    // Load the reference face from session storage
     const img = new Image();
     img.src = oldFaceData;
     img.onload = async () => {
       const refDetection = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
 
       if (!refDetection) {
-        alert("Reference face not detected in the stored image.");
+        alert("Reference face not detected in stored image.");
         return;
       }
 
@@ -191,11 +193,10 @@
       const newDescriptor = window.capturedDescriptor;
 
       const distance = faceapi.euclideanDistance(refDescriptor, newDescriptor);
-
-      const threshold = 0.6;  // Empirical threshold
+      const threshold = 0.6;
 
       if (distance < threshold) {
-        alert("😊 Faces matched! Same person.");
+        alert("😊 Faces matched! It's the same person.");
       } else {
         alert("😢 Faces did not match.");
       }
