@@ -237,10 +237,10 @@ async function matchFaces(canvasEl) {
 
     try {
       // Detect faces in current canvas
-      newDetections = await faceapi
+      /*newDetections = await faceapi
         .detectAllFaces(canvasEl)
         .withFaceLandmarks()
-        .withFaceDescriptors();
+        .withFaceDescriptors();*/
 
       // Use the image directly instead of canvas - this often works better
       storedDetections = await faceapi
