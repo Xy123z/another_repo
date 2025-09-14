@@ -211,7 +211,7 @@ transition: all 0.2s ease-in-out;
   ctx.drawImage(img, 0, 0, img.width, img.height);
   return offCanvas;
 }
-async function compareFaces() {
+async function compareFaces(currentCanvas) {
     try {
         const storedDataURL = sessionStorage.getItem('imageData');
         if (!storedDataURL) {
@@ -219,11 +219,11 @@ async function compareFaces() {
             return;
         }
 
-        const currentCanvas = document.getElementById('snapshot');
+        /*const currentCanvas = document.getElementById('snapshot');
         if (!currentCanvas || currentCanvas.width === 0 || currentCanvas.height === 0) {
             alert('🌸 Current snapshot is empty');
             return;
-        }
+        }*/
 
         // Load stored image
         const storedImage = await loadImageFromDataURL(storedDataURL);
