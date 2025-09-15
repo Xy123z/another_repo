@@ -163,14 +163,14 @@ transition: all 0.2s ease-in-out;
     } catch (ssdError) {
       console.error('FAILED to load SSD Mobilenet:', ssdError);
       // Fall back to trying TinyFaceDetector
-      try {
+    }
+    try {
         await faceapi.nets.tinyFaceDetector.loadFromUri('./models/');
         console.log('TinyFaceDetector loaded successfully (fallback)');
       } catch (tinyError) {
         console.error('FAILED to load TinyFaceDetector too:', tinyError);
         throw new Error('No face detection models could be loaded');
       }
-    }
 
     await faceapi.nets.faceRecognitionNet.loadFromUri('./models/');
     console.log('FaceRecognitionNet loaded successfully');
