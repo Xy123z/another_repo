@@ -132,8 +132,10 @@ function showCapturedFace(start, area) {
     setTimeout(() => {
         newoverlay.classList.remove('show');
         overlay.classList.add('show');
+      previewcanvas.width = area.width;
+        previewcanvas.height = area.height;
         copiedContext.clearRect(0, 0, previewcanvas.width, previewcanvas.height);
-        copiedContext.filter = 'grayscale(100%) contrast(200%)';
+        copiedContext.filter = 'contrast(200%)';
         copiedContext.drawImage(
             video,
             start[0], start[1], area[0], area[1],
