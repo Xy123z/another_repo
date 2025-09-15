@@ -230,6 +230,7 @@ async function compareFaces(currentCanvas) {
 
         // Load stored image
         const storedImage = await loadImageFromDataURL(storedDataURL);
+      console.log(storedImage);
       const storedCanvas = await imageToCanvas(storedImage);
         const currentImage = await loadImageFromDataURL(currentCanvas.toDataURL());
       console.log(storedCanvas.width, storedCanvas.height);
