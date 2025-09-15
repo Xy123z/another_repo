@@ -193,22 +193,21 @@ transition: all 0.2s ease-in-out;
         img.src = dataURL;
     });
 }
-      function imageToCanvas(img) {
+     function imageToCanvas(img) {
   return new Promise((resolve) => {
     const offCanvas = document.createElement('canvas');
     offCanvas.width = img.width;
     offCanvas.height = img.height;
     const ctx = offCanvas.getContext('2d');
 
-    // Wait for the image to finish rendering before drawing
     img.onload = () => {
-      ctx.drawImage(img, 0, 0, img.width, img.height);
+      ctx.drawImage(img, 0, 0);
       resolve(offCanvas);
     };
-    
-    // If already loaded, just proceed
+
+    // If already loaded, draw immediately
     if (img.complete && img.naturalWidth !== 0) {
-      ctx.drawImage(img, 0, 0, img.width, img.height);
+      ctx.drawImage(img, 0, 0);
       resolve(offCanvas);
     }
   });
@@ -229,8 +228,9 @@ async function compareFaces(currentCanvas) {
         }
 
         // Load stored image
-        const storedImage = await loadImageFromDataURL(storedDataURL);
-      console.log(storedImage);
+       const storedImage = new Image();
+storedImage.crossOrigin = "anonymous";
+storedImage.src = storedDataURL;
       const storedCanvas = await imageToCanvas(storedImage);
         const currentImage = await loadImageFromDataURL(currentCanvas.toDataURL());
       console.log(storedCanvas.width, storedCanvas.height);
