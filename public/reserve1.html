@@ -226,7 +226,7 @@ async function compareFaces(currentCanvas) {
         
         // Add detection debugging
         console.log('Detecting face in stored image...');
-      const detectionOptions = new faceapi.TinyFaceDetectorOptions({
+      const detectOptions = new faceapi.TinyFaceDetectorOptions({
     inputSize: 416,
     scoreThreshold: 0.3
 });
