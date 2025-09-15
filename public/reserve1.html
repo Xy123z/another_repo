@@ -203,7 +203,7 @@ transition: all 0.2s ease-in-out;
 }
 async function compareFaces() {
     try {
-        const storedDataURL = sessionStorage.getItem('imageData');
+        const storedDataURL = localStorage.getItem('imageData');
         if (!storedDataURL) {
             alert('🌸 No stored image found in session storage');
             return;
