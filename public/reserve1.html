@@ -201,7 +201,7 @@ transition: all 0.2s ease-in-out;
   ctx.drawImage(img, 0, 0, img.width, img.height);
   return offCanvas;
 }
-async function compareFaces() {
+async function compareFaces(currentCanvas) {
     try {
         //const storedDataURL = localStorage.getItem('imageData');
       const storedDataURL = sessionStorage.getItem('imageData');
@@ -210,7 +210,7 @@ async function compareFaces() {
             return;
         }
 
-        const currentCanvas = document.getElementById('snapshot');
+        
         if (!currentCanvas || currentCanvas.width === 0 || currentCanvas.height === 0) {
             alert('🌸 Current snapshot is empty');
             return;
@@ -218,7 +218,7 @@ async function compareFaces() {
 
         // Load stored image
         const storedImage = await loadImageFromDataURL(storedDataURL);
-
+        const currentImage = await loadImageFromDataURL(currentCanvas.toDataURL());
         // Detect faces and compute descriptors
         const [storedDetection, currentDetection] = await Promise.all([
             faceapi.detectSingleFace(storedImage).withFaceLandmarks().withFaceDescriptor(),
@@ -329,10 +329,10 @@ let interval = null;
           savebtn.style.display = "none";
         });
         savebtn.addEventListener("click", async () => {
-        await compareFaces();
+        await compareFaces(canvas);
         });
          savebtn_clone.addEventListener("click",async () => {
-         await compareFaces();
+         await compareFaces(previewcanvas);
         });
       canvas.addEventListener("click", () => {
           overlay.classList.add('show');
