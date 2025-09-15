@@ -218,10 +218,13 @@ async function compareFaces(currentCanvas) {
 
         // Load stored image
         const storedImage = await loadImageFromDataURL(storedDataURL);
+      const storedCanvas = imageToCanvas(storedImage);
         const currentImage = await loadImageFromDataURL(currentCanvas.toDataURL());
+      console.log(storedCanvas.width, storedCanvas.height);
+      console.log(currentCanvas.width, currentCanvas.height);
         // Detect faces and compute descriptors
         const [storedDetection, currentDetection] = await Promise.all([
-            faceapi.detectSingleFace(storedImage).withFaceLandmarks().withFaceDescriptor(),
+            faceapi.detectSingleFace(storedCanvas).withFaceLandmarks().withFaceDescriptor(),
             faceapi.detectSingleFace(currentCanvas).withFaceLandmarks().withFaceDescriptor()
         ]);
 
