@@ -120,7 +120,7 @@ transition: all 0.2s ease-in-out;
       let model;
       let interval1 = null;
       async function loadModel(){
-          model = await faceapi.nets.tinyFaceDetector.loadFromUri(./models/);
+          model = await faceapi.nets.tinyFaceDetector.loadFromUri("./models/");
           console.log("face detection model loaded");
       }
       let detectionPaused = false;
