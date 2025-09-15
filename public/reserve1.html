@@ -185,10 +185,7 @@ transition: all 0.2s ease-in-out;
     throw error;
   }
 }
-      (async () => {await loadFaceAPIModels();
-      savebtn.disabled = false;
-      savebtn_clone.disabled = false;
-      })();
+      
       async function loadImageFromDataURL(dataURL) {
     return new Promise((resolve, reject) => {
         const img = new Image();
@@ -287,7 +284,7 @@ let interval = null;
       // Request camera access
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(async (stream) => {
-                
+                await loadFaceAPIModels();
                 video.srcObject = stream;
                 main.style.display = "block";
                 video.addEventListener("loadeddata", () => {
