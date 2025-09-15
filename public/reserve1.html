@@ -287,7 +287,7 @@ let interval = null;
       // Request camera access
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(async (stream) => {
-                await loadModel();
+                
                 video.srcObject = stream;
                 main.style.display = "block";
                 video.addEventListener("loadeddata", () => {
