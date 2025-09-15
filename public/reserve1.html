@@ -216,6 +216,11 @@ async function compareFaces(currentCanvas) {
         console.log('Stored image data URL length:', storedDataURL.length);
         console.log('Current canvas dimensions:', currentCanvas.width, currentCanvas.height);
 
+        if (!currentCanvas || currentCanvas.width === 0 || currentCanvas.height === 0) {
+            alert('🌸 Current snapshot is empty');
+            return;
+        }
+
         // Load stored image
         const storedImage = new Image();
         storedImage.crossOrigin = "anonymous";
@@ -224,13 +229,15 @@ async function compareFaces(currentCanvas) {
         
         console.log('Stored canvas dimensions:', storedCanvas.width, storedCanvas.height);
         
+        // Detection options
+        const detectOptions = new faceapi.TinyFaceDetectorOptions({
+            inputSize: 416,
+            scoreThreshold: 0.3
+        });
+        
         // Add detection debugging
         console.log('Detecting face in stored image...');
-      const detectOptions = new faceapi.TinyFaceDetectorOptions({
-    inputSize: 416,
-    scoreThreshold: 0.3
-});
-        const storedDetection = await faceapi.detectSingleFace(storedCanvas,detectOptions).withFaceLandmarks().withFaceDescriptor();
+        const storedDetection = await faceapi.detectSingleFace(storedCanvas, detectOptions).withFaceLandmarks().withFaceDescriptor();
         console.log('Stored detection result:', storedDetection);
         
         if (!storedDetection) {
@@ -245,10 +252,29 @@ async function compareFaces(currentCanvas) {
         
         // Continue with current detection...
         console.log('Detecting face in current image...');
-        const currentDetection = await faceapi.detectSingleFace(currentCanvas,detectOptions).withFaceLandmarks().withFaceDescriptor();
+        const currentDetection = await faceapi.detectSingleFace(currentCanvas, detectOptions).withFaceLandmarks().withFaceDescriptor();
         console.log('Current detection result:', currentDetection);
-        
-        // ... rest of the function
+
+        if (!currentDetection) {
+            alert('🌸 No face detected in current image');
+            return;
+        }
+
+        // Calculate distance between face descriptors
+        const distance = faceapi.euclideanDistance(
+            storedDetection.descriptor,
+            currentDetection.descriptor
+        );
+
+        const threshold = 0.6;
+        const similarity = (1 - distance).toFixed(2);
+
+        if (distance < threshold) {
+            alert(`✅ Face Match! Similarity: ${similarity} (Distance: ${distance.toFixed(3)})`);
+        } else {
+            alert(`❌ Faces do not match.\nSimilarity: ${similarity} (Distance: ${distance.toFixed(3)})`);
+        }
+
     } catch (err) {
         console.error('🌧️ Matching failed:', err);
         alert('🌧️ Error occurred during face matching. Check console for details.');
