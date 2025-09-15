@@ -150,8 +150,6 @@ transition: all 0.2s ease-in-out;
       let model;
       let interval1 = null;
       savebtn_clone = savebtn.cloneNode(true);
-      savebtn.disabled = true;
-      savebtn_clone.disabled = true;
       async function loadFaceAPIModels() {
   try {
     console.log('Starting to load Face-API models...');
