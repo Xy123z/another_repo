@@ -156,15 +156,8 @@ transition: all 0.2s ease-in-out;
 
     // Try loading SSD Mobilenet instead of TinyFaceDetector
     try {
-      await faceapi.nets.ssdMobilenetv1.loadFromUri('./models/');
-      console.log('SSD Mobilenet loaded successfully');
-    } catch (ssdError) {
-      console.error('FAILED to load SSD Mobilenet:', ssdError);
-      // Fall back to trying TinyFaceDetector
-    }
-    try {
         await faceapi.nets.tinyFaceDetector.loadFromUri('./models/');
-        console.log('TinyFaceDetector loaded successfully (fallback)');
+        console.log('TinyFaceDetector loaded successfully');
       } catch (tinyError) {
         console.error('FAILED to load TinyFaceDetector too:', tinyError);
         throw new Error('No face detection models could be loaded');
@@ -214,56 +207,48 @@ transition: all 0.2s ease-in-out;
 }
 async function compareFaces(currentCanvas) {
     try {
-        //const storedDataURL = localStorage.getItem('imageData');
-      const storedDataURL = sessionStorage.getItem('imageData');
+        const storedDataURL = sessionStorage.getItem('imageData');
         if (!storedDataURL) {
             alert('🌸 No stored image found in session storage');
             return;
         }
-
         
-        if (!currentCanvas || currentCanvas.width === 0 || currentCanvas.height === 0) {
-            alert('🌸 Current snapshot is empty');
-            return;
-        }
+        console.log('Stored image data URL length:', storedDataURL.length);
+        console.log('Current canvas dimensions:', currentCanvas.width, currentCanvas.height);
 
         // Load stored image
-       const storedImage = new Image();
-storedImage.crossOrigin = "anonymous";
-storedImage.src = storedDataURL;
-      const storedCanvas = await imageToCanvas(storedImage);
-        const currentImage = await loadImageFromDataURL(currentCanvas.toDataURL());
-      console.log(storedCanvas.width, storedCanvas.height);
-      console.log(currentCanvas.width, currentCanvas.height);
-        // Detect faces and compute descriptors
-        const [storedDetection, currentDetection] = await Promise.all([
-            faceapi.detectSingleFace(storedCanvas).withFaceLandmarks().withFaceDescriptor(),
-            faceapi.detectSingleFace(currentCanvas).withFaceLandmarks().withFaceDescriptor()
-        ]);
-
+        const storedImage = new Image();
+        storedImage.crossOrigin = "anonymous";
+        storedImage.src = storedDataURL;
+        const storedCanvas = await imageToCanvas(storedImage);
+        
+        console.log('Stored canvas dimensions:', storedCanvas.width, storedCanvas.height);
+        
+        // Add detection debugging
+        console.log('Detecting face in stored image...');
+      const detectionOptions = new faceapi.TinyFaceDetectorOptions({
+    inputSize: 416,
+    scoreThreshold: 0.3
+});
+        const storedDetection = await faceapi.detectSingleFace(storedCanvas,detectOptions).withFaceLandmarks().withFaceDescriptor();
+        console.log('Stored detection result:', storedDetection);
+        
         if (!storedDetection) {
-            alert('🌸 No face detected in stored image');
+            // Try to save the stored canvas for debugging
+            const debugLink = document.createElement('a');
+            debugLink.download = 'stored_image_debug.png';
+            debugLink.href = storedCanvas.toDataURL();
+            debugLink.click();
+            alert('🌸 No face detected in stored image. Debug image saved.');
             return;
         }
-
-        if (!currentDetection) {
-            alert('🌸 No face detected in current image');
-            return;
-        }
-
-        const distance = faceapi.euclideanDistance(
-            storedDetection.descriptor,
-            currentDetection.descriptor
-        );
-
-        const threshold = 0.6;
-
-        if (distance < threshold) {
-            alert(`✅ Face Match! Similarity: ${(1 - distance).toFixed(2)} (Distance: ${distance.toFixed(3)})`);
-        } else {
-            alert(`❌ Faces do not match.\nSimilarity: ${(1 - distance).toFixed(2)} (Distance: ${distance.toFixed(3)})`);
-        }
-
+        
+        // Continue with current detection...
+        console.log('Detecting face in current image...');
+        const currentDetection = await faceapi.detectSingleFace(currentCanvas,detectOptions).withFaceLandmarks().withFaceDescriptor();
+        console.log('Current detection result:', currentDetection);
+        
+        // ... rest of the function
     } catch (err) {
         console.error('🌧️ Matching failed:', err);
         alert('🌧️ Error occurred during face matching. Check console for details.');
