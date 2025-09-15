@@ -160,18 +160,18 @@ let interval = null;
                const livePredictions = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions());
                 if(livePredictions.length > 0){
                 livePredictions.forEach(pred => {
-                /*const start = pred.topLeft;
+                const start = pred.topLeft;
                 const end = pred.bottomRight;
-                const area = [end[0] - start[0], end[1] - start[1]];*/
-                  const box = pred.box;
+                const area = [end[0] - start[0], end[1] - start[1]];
+                  //const box = pred.box;
                 overlayContext.strokeStyle = "red";
                 overlayContext.lineWidth = 3;
-                //overlayContext.strokeRect(start[0], start[1], area[0], area[1]);
-                  overlayContext.strokeRect(box.x, box.y, box.width, box.height);
+                overlayContext.strokeRect(start[0], start[1], area[0], area[1]);
+                  //overlayContext.strokeRect(box.x, box.y, box.width, box.height);
                 if(!detectionPaused){
                 detectionPaused = true;
-                //showCapturedFace(start,area);
-                  showCapturedFace({x: box.x, y: box.y},{width: box.width, height: box.height})
+                showCapturedFace(start,area);
+                  //showCapturedFace({x: box.x, y: box.y},{width: box.width, height: box.height})
                 }
                 });
                 }
