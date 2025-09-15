@@ -2,8 +2,7 @@
 <html lang=en>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script  src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"></script>
+  
 <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <style>
   @keyframes slideUpFade{
@@ -159,13 +158,13 @@ transition: all 0.2s ease-in-out;
 
     // Try loading SSD Mobilenet instead of TinyFaceDetector
     try {
-      await faceapi.nets.ssdMobilenetv1.loadFromUri('./models');
+      await faceapi.nets.ssdMobilenetv1.loadFromUri('./models/');
       console.log('SSD Mobilenet loaded successfully');
     } catch (ssdError) {
       console.error('FAILED to load SSD Mobilenet:', ssdError);
       // Fall back to trying TinyFaceDetector
       try {
-        await faceapi.nets.tinyFaceDetector.loadFromUri('./models');
+        await faceapi.nets.tinyFaceDetector.loadFromUri('./models/');
         console.log('TinyFaceDetector loaded successfully (fallback)');
       } catch (tinyError) {
         console.error('FAILED to load TinyFaceDetector too:', tinyError);
@@ -173,10 +172,10 @@ transition: all 0.2s ease-in-out;
       }
     }
 
-    await faceapi.nets.faceRecognitionNet.loadFromUri('./models');
+    await faceapi.nets.faceRecognitionNet.loadFromUri('./models/');
     console.log('FaceRecognitionNet loaded successfully');
 
-    await faceapi.nets.faceLandmark68Net.loadFromUri('./models');
+    await faceapi.nets.faceLandmark68Net.loadFromUri('./models/');
     console.log('FaceLandmark68Net loaded successfully');
 
     console.log('Face-api model loading completed');
@@ -186,10 +185,6 @@ transition: all 0.2s ease-in-out;
     throw error;
   }
 }
-      async function loadModel(){
-          model = await blazeface.load();
-          console.log("face detection model loaded");
-      }
       (async () => {await loadFaceAPIModels();
       savebtn.disabled = false;
       savebtn_clone.disabled = false;
@@ -277,13 +272,13 @@ function showCapturedFace(start, area) {
         savebtn_clone.style.display = 'inline-block';
         overlay.appendChild(savebtn_clone);
         overlay.classList.add('show');
-        previewcanvas.width = area[0];
-        previewcanvas.height = area[1];
+        previewcanvas.width = area.width;
+        previewcanvas.height = area.height;
         copiedContext.clearRect(0, 0, previewcanvas.width, previewcanvas.height);
         copiedContext.filter = 'contrast(200%)';
         copiedContext.drawImage(
             video,
-            start[0], start[1], area[0], area[1],
+            start.x,start.y,area.width,area.height,
             0, 0, previewcanvas.width, previewcanvas.height
         );
     }, 3000);
@@ -300,18 +295,15 @@ let interval = null;
                 overlaycanvas.height = video.videoHeight;
              interval =  setInterval(async () =>{
                 overlayContext.clearRect(0, 0, overlaycanvas.width, overlaycanvas.height);
-                const liveTensors = false;
-                const livePredictions = await model.estimateFaces(video,liveTensors);
+             const livePredictions = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions());
                 if(livePredictions.length > 0){
                 livePredictions.forEach(pred => {
-                const start = pred.topLeft;
-                const end = pred.bottomRight;
-                const area = [end[0] - start[0], end[1] - start[1]];
+                const box = pred.box;
                 overlayContext.strokeStyle = "red";
                 overlayContext.lineWidth = 3;
-                overlayContext.strokeRect(start[0], start[1], area[0], area[1]);
+                overlayContext.strokeRect(box.x, box.y, box.width, box.height);
                 if(!canceled&&!detectionPaused){
-                showCapturedFace(start,area);
+                showCapturedFace({x: box.x, y: box.y},{width: box.width, height: box.height});
                 }
                 });
                 }
