@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <style>
+    @keyframes slideUpFade {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    body {
+      background-color: #ff9999;
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    #camera {
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      display: block;
+      width: 300px;
+      height: 400px;
+      object-fit: cover;
+      padding: 5px;
+      animation: slideUpFade 0.5s ease-out;
+    }
+
+    #previewcanvas {
+      padding: 5px;
+      border: none;
+      border-radius: 10px;
+    }
+
+    #btn2 {
+      background-color: FloralWhite;
+      border-radius: 10px;
+      border: none;
+      padding: 10px;
+      animation: slideUpFade 0.5s ease-out;
+    }
+
+    #btn2:hover {
+      background-color: red;
+      transform: scale(1.03);
+      transition: all 0.2s ease-in-out;
+    }
+
+    #overlay, #newoverlay, #nameOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      visibility: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1001;
+      backdrop-filter: blur(8px);
+      background-color: rgba(0,0,0,0.5);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    #overlay.show, #newoverlay.show, #nameOverlay.show {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    #newoverlay div, #nameOverlay div {
+      background-color: white;
+      padding: 20px 30px;
+      border-radius: 10px;
+      font-size: 1.5em;
+      text-align: center;
+      color: black;
+      box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    }
+
+    #imageNameInput {
+      margin: 10px 0;
+      padding: 8px;
+      font-size: 1em;
+      border-radius: 5px;
+    }
+
+    #previewcanvas, #storedImgCanvas {
+      max-height: 90vh;
+      max-width: 90vw;
+      height: auto;
+      width: auto;
+      z-index: 1002;
+      border-radius: 10px;
+      border: none;
+    }
+  </style>
+  <title>Camera Face Capture</title>
+</head>
+<body>
+  <div id="main" style="display:none;">
+    <div id="newoverlay">
+      <div id="message">
+        <p id="p">Capturing image...</p>
+      </div>
+    </div>
+
+    <div id="overlay">
+      <canvas id="previewcanvas"></canvas>
+      <button id="btn2" style="display:none;">Next</button>
+    </div>
+
+    <div id="nameOverlay">
+      <div>
+        <p>🌸 Enter image name:</p>
+        <input type="text" id="imageNameInput" placeholder="e.g., myface" />
+        <button id="setNameBtn">Set</button>
+      </div>
+    </div>
+<canvas id="storedImgCanvas" style="width:300px; height:400px;"></canvas>
+    <div style="position:relative; width:300px; height:400px;">
+      <video id="camera" width="300" height="400" autoplay></video>
+      <canvas id="overlaycanvas" style="position:absolute; top:0; left:0; width:300px; height:400px;"></canvas>
+    </div>
+  </div>
+
+  <script>
+    const video = document.getElementById('camera');
+    const previewcanvas = document.getElementById('previewcanvas');
+    const copiedContext = previewcanvas.getContext('2d');
+    const main = document.getElementById('main');
+    const savebtn = document.getElementById('btn2');
+    const overlaycanvas = document.getElementById('overlaycanvas');
+    const overlayContext = overlaycanvas.getContext('2d');
+    const overlay = document.getElementById('overlay');
+    const newoverlay = document.getElementById('newoverlay');
+    const storedImgCanvas = document.getElementById("storedImgCanvas");
+    const storedContext = storedImgCanvas.getContext('2d');
+    let model;
+    let interval = null;
+    let detectionPaused = false;
+    let storedCanvas = null;
+    let currentCanvas = null;
+
+    async function loadModel() {
+      await faceapi.nets.tinyFaceDetector.loadFromUri('./models/');
+      await faceapi.nets.faceLandmark68Net.loadFromUri('./models/');
+      await faceapi.nets.faceRecognitionNet.loadFromUri('./models/');
+      console.log('🌸 Face models loaded');
+    }
+
+    function imageToCanvas(img) {
+      return new Promise((resolve, reject) => {
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const offCanvas = document.createElement('canvas');
+          offCanvas.width = img.width;
+          offCanvas.height = img.height;
+          const ctx = offCanvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          resolve(offCanvas);
+        };
+        img.onerror = (err) => reject(err);
+      });
+    }
+
+  async function preloadStoredImage() {
+      const storedImage = new Image();
+      storedImage.crossOrigin = 'anonymous';
+      storedImage.src = './sir.jpeg';
+      storedCanvas = await imageToCanvas(storedImage);
+      console.log('✅ Stored image preloaded.');
+      storedContext.drawImage(storedCanvas, 0, 0, 300, 400);
+    }
+    async function preloadCurrentImage() {
+      const currentImage = new Image();
+      currentImage.crossOrigin = 'anonymous';
+      currentImage.src = './puskar.jpeg';
+      currentCanvas = await imageToCanvas(currentImage);
+      console.log('✅ Current image preloaded.');
+    }
+
+    function showNameInputOverlay(capturedCanvas) {
+      newoverlay.classList.remove('show');
+      document.getElementById('nameOverlay').classList.add('show');
+
+      const setNameBtn = document.getElementById('setNameBtn');
+      setNameBtn.onclick = async () => {
+        const inputName = document.getElementById('imageNameInput').value.trim();
+        if (inputName === '') {
+          alert('❗ Please enter a valid name.');
+          return;
+        }
+
+        const filename = `${inputName}.jpeg`;
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = capturedCanvas.toDataURL('image/jpeg');
+        link.click();
+        document.getElementById('nameOverlay').classList.remove('show');
+
+        currentCanvas = document.createElement('canvas');
+        currentCanvas.width = capturedCanvas.width;
+        currentCanvas.height = capturedCanvas.height;
+        currentCanvas.getContext('2d').drawImage(capturedCanvas, 0, 0);
+
+        previewcanvas.width = capturedCanvas.width;
+        previewcanvas.height = capturedCanvas.height;
+        copiedContext.clearRect(0, 0, previewcanvas.width, previewcanvas.height);
+        copiedContext.drawImage(currentCanvas, 0, 0);
+
+        savebtn.style.display = 'block';
+        await preloadCurrentImage();
+      };
+    }
+
+    function showCapturedFace(start, area) {
+      newoverlay.classList.add('show');
+      void newoverlay.offsetWidth;
+
+      setTimeout(() => {
+        newoverlay.classList.remove('show');
+        overlay.classList.add('show');
+
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = area.width;
+        tempCanvas.height = area.height;
+        tempCanvas.getContext('2d').drawImage(
+          video,
+          start.x, start.y, area.width, area.height,
+          0, 0, area.width, area.height
+        );
+
+        showNameInputOverlay(tempCanvas);
+      }, 3000);
+    }
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(async (stream) => {
+        await loadModel();
+        await preloadStoredImage();
+
+        video.srcObject = stream;
+        main.style.display = 'block';
+        video.addEventListener('loadeddata', () => {
+          overlaycanvas.width = video.videoWidth;
+          overlaycanvas.height = video.videoHeight;
+
+          interval = setInterval(async () => {
+            overlayContext.clearRect(0, 0, overlaycanvas.width, overlaycanvas.height);
+
+            const livePredictions = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions());
+
+            if (livePredictions.length > 0) {
+              livePredictions.forEach(pred => {
+                const box = pred.box;
+                overlayContext.strokeStyle = 'red';
+                overlayContext.lineWidth = 3;
+                overlayContext.strokeRect(box.x, box.y, box.width, box.height);
+
+                if (!detectionPaused) {
+                  detectionPaused = true;
+                  showCapturedFace({ x: box.x, y: box.y }, { width: box.width, height: box.height });
+                }
+              });
+            }
+          }, 100);
+        });
+      })
+      .catch(err => {
+        console.error('🌧️ Camera error:', err);
+        alert('🌧️ Please allow camera access!');
+      });
+
+    savebtn.addEventListener('click', async () => {
+      if (currentCanvas) {
+        try {
+          const detectOption = new faceapi.TinyFaceDetectorOptions({
+            inputSize: 512,
+            scoreThreshold: 0.1
+          });
+
+          const storedDetection = await faceapi.detectSingleFace(storedCanvas, detectOption).withFaceLandmarks().withFaceDescriptor();
+          const currentDetection = await faceapi.detectSingleFace(currentCanvas, detectOption).withFaceLandmarks().withFaceDescriptor();
+
+          if (!storedDetection || !currentDetection) {
+            alert('❗ No face detected in one of the images.');
+            return;
+          }
+
+          const distance = faceapi.euclideanDistance(storedDetection.descriptor, currentDetection.descriptor);
+          const threshold = 0.6;
+          const similarity = (1 - distance).toFixed(2);
+
+          if (distance < threshold) {
+            alert(`✅ Face Match! Similarity: ${similarity} (Distance: ${distance.toFixed(3)})`);
+          } else {
+            alert(`❌ Faces do not match.\nSimilarity: ${similarity} (Distance: ${distance.toFixed(3)})`);
+          }
+
+        } catch (err) {
+          console.error('🌧️ Matching failed:', err);
+          alert('🌧️ An unexpected error occurred. See console for details.');
+        }
+      } else {
+        alert('❗ Canvas is empty.');
+      }
+    });
+  </script>
+</body>
+</html>
